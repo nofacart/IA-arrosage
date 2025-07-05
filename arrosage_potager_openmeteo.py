@@ -1,22 +1,31 @@
 import requests
 from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
 
-# Configuration
+# 🌍 Configuration météo
 latitude = 43.66528
 longitude = 1.3775
 days_back = 7
 days_forward = 3
 
-# Obtenir les dates
+# 📧 Configuration email (récupérée depuis les secrets GitHub Actions)
+EMAIL_SENDER = os.environ["EMAIL_SENDER"]
+EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
+EMAIL_RECEIVER = os.environ["EMAIL_RECEIVER"]
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+
+# 📆 Période analysée
 today = datetime.now().date()
 start_past = today - timedelta(days=days_back)
 end_future = today + timedelta(days=days_forward)
-
-# Format ISO pour l’API
 start_past_str = start_past.isoformat()
 end_future_str = end_future.isoformat()
 
-# 📦 API Open-Meteo (historique + prévisions)
+# 🔗 Appel à l’API Open-Meteo
 url = (
     f"https://api.open-meteo.com/v1/forecast?"
     f"latitude={latitude}&longitude={longitude}"
@@ -33,12 +42,11 @@ if response.status_code != 200:
     exit()
 
 data = response.json()
-
 dates = data["daily"]["time"]
 temp_max = data["daily"]["temperature_2m_max"]
 precip = data["daily"]["precipitation_sum"]
 
-# Analyse
+# 📊 Analyse des données
 cumul_precip_passe = sum(
     p for d, p in zip(dates, precip) if datetime.strptime(d, "%Y-%m-%d").date() < today
 )
@@ -50,7 +58,7 @@ jours_chauds = sum(
     if datetime.strptime(d, "%Y-%m-%d").date() >= today and t >= 30
 )
 
-# Déterminer un seuil d’arrosage
+# 💧 Seuil d’arrosage ajusté automatiquement
 if cumul_precip_passe + cumul_precip_futur >= 10:
     seuil_arrosage = 5
 elif jours_chauds >= 3:
@@ -58,7 +66,7 @@ elif jours_chauds >= 3:
 else:
     seuil_arrosage = 3
 
-# ✍️ Génération du rapport
+# 📄 Génération du rapport
 rapport = "-----------------------------------------\n"
 rapport += "Date       | Température | Pluie (mm)\n"
 rapport += "-----------|-------------|------------\n"
@@ -67,11 +75,29 @@ for d, t, p in zip(dates, temp_max, precip):
     rapport += f"{d}  |   {t:5.1f}°C    |   {p:.1f}\n"
 
 rapport += "-----------------------------------------\n"
-rapport += f"\n🌿 Conclusion :\n"
+rapport += "\n🌿 Conclusion :\n"
 rapport += f"💧 Il faut arroser votre jardin si vous avez arrosé il y a plus de {seuil_arrosage} jours.\n"
 
-# 💾 Sauvegarde dans le fichier
+# 💾 Sauvegarde du rapport
 with open("rapport_arrosage_openmeteo.txt", "w", encoding="utf-8") as f:
     f.write(rapport)
 
-print("✅ Rapport généré avec succès : rapport_arrosage_openmeteo.txt")
+print("✅ Rapport généré : rapport_arrosage_openmeteo.txt")
+
+# ✉️ Envoi de l’email
+try:
+    msg = MIMEMultipart()
+    msg["From"] = EMAIL_SENDER
+    msg["To"] = EMAIL_RECEIVER
+    msg["Subject"] = "🌱 Rapport Arrosage – " + datetime.now().strftime("%d/%m/%Y")
+
+    msg.attach(MIMEText(rapport, "plain"))
+
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        server.starttls()
+        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        server.send_message(msg)
+
+    print("✅ Email envoyé avec succès.")
+except Exception as e:
+    print("❌ Erreur envoi email :", e)
