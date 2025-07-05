@@ -1,118 +1,76 @@
 import requests
-from datetime import datetime
-import json
+from datetime import datetime, timedelta
 
-# Coordonnées de Beauzelle
-LAT, LON = 43.66528, 1.3775
-type_plante = "potagère"
+# Configuration
+latitude = 43.66528
+longitude = 1.3775
+days_back = 7
+days_forward = 3
 
-# Paramètres de l'API Open-Meteo (forecast standard)
-url = "https://api.open-meteo.com/v1/forecast"
-params = {
-    "latitude": LAT,
-    "longitude": LON,
-    "timezone": "Europe/Paris",
-    "past_days": 7,
-    "forecast_days": 7,
-    "daily": [
-        "temperature_2m_max",
-        "precipitation_sum",
-        "et0_fao_evapotranspiration",
-        "shortwave_radiation_sum"
-    ]
-}
+# Obtenir les dates
+today = datetime.now().date()
+start_past = today - timedelta(days=days_back)
+end_future = today + timedelta(days=days_forward)
 
-# Appel API
-resp = requests.get(url, params=params)
-data = resp.json()
+# Format ISO pour l’API
+start_past_str = start_past.isoformat()
+end_future_str = end_future.isoformat()
 
-# Affiche les clés pour vérifier
-if "daily" not in data or not data["daily"]:
-    print("❌ Erreur API : données météo manquantes.")
-    print("🛠️ Données reçues :", list(data.keys()))
-    print(json.dumps(data, indent=2))
-    exit(1)
+# 📦 API Open-Meteo (historique + prévisions)
+url = (
+    f"https://api.open-meteo.com/v1/forecast?"
+    f"latitude={latitude}&longitude={longitude}"
+    f"&daily=temperature_2m_max,precipitation_sum"
+    f"&timezone=Europe%2FParis"
+    f"&start_date={start_past_str}&end_date={end_future_str}"
+)
 
-# Extraction des données journalières
-daily = data["daily"]
-dates = daily["time"]
-temps_max = daily["temperature_2m_max"]
-pluies = daily["precipitation_sum"]
-et0 = daily["et0_fao_evapotranspiration"]
-radiations = daily["shortwave_radiation_sum"]
+print("📡 Requête météo en cours...")
+response = requests.get(url)
 
-# Passé (7 jours) et futur (7 jours)
-passe = list(zip(dates[:7], temps_max[:7], pluies[:7], et0[:7], radiations[:7]))
-futur = list(zip(dates[7:], temps_max[7:], pluies[7:], et0[7:], radiations[7:]))
+if response.status_code != 200:
+    print("❌ Erreur API :", response.text)
+    exit()
 
-# Analyse simplifiée
-def analyse(liste):
-    total_pluie = sum(p[2] for p in liste)
-    total_et0 = sum(p[3] for p in liste)
-    jours_secs = sum(1 for p in liste if p[2] < 1)
-    jours_chauds = sum(1 for p in liste if p[1] > 30)
-    return total_pluie, total_et0, jours_secs, jours_chauds
+data = response.json()
 
-pluie_passe, et0_passe, secs_passe, chauds_passe = analyse(passe)
-pluie_futur, et0_futur, secs_futur, chauds_futur = analyse(futur)
-deficit_hydrique = et0_passe - pluie_passe
+dates = data["daily"]["time"]
+temp_max = data["daily"]["temperature_2m_max"]
+precip = data["daily"]["precipitation_sum"]
 
-# Demande utilisateur
-try:
-    jours_depuis_arrosage = int(input("💬 Combien de jours depuis le dernier arrosage ? : "))
-except ValueError:
-    print("⚠️ Entrée invalide. On considère 10 jours par défaut.")
-    jours_depuis_arrosage = 10
+# Analyse
+cumul_precip_passe = sum(
+    p for d, p in zip(dates, precip) if datetime.strptime(d, "%Y-%m-%d").date() < today
+)
+cumul_precip_futur = sum(
+    p for d, p in zip(dates, precip) if datetime.strptime(d, "%Y-%m-%d").date() >= today
+)
+jours_chauds = sum(
+    1 for d, t in zip(dates, temp_max)
+    if datetime.strptime(d, "%Y-%m-%d").date() >= today and t >= 30
+)
 
-# Recommandation
-if jours_depuis_arrosage <= 1:
-    recommandation = "Pas d'arrosage (déjà arrosé récemment)"
-elif jours_depuis_arrosage <= 3:
-    if pluie_futur < 5 and secs_futur >= 3:
-        recommandation = "Arrosage léger recommandé"
-    else:
-        recommandation = "Pas d'arrosage nécessaire"
+# Déterminer un seuil d’arrosage
+if cumul_precip_passe + cumul_precip_futur >= 10:
+    seuil_arrosage = 5
+elif jours_chauds >= 3:
+    seuil_arrosage = 2
 else:
-    if pluie_futur > 15:
-        recommandation = "Pas d'arrosage (pluie prévue)"
-    elif deficit_hydrique > 10 or chauds_futur >= 3:
-        recommandation = "Arrosage conseillé (déficit hydrique important)"
-    else:
-        recommandation = "Arrosage modéré possible"
+    seuil_arrosage = 3
 
-# Rapport météo jour par jour
-ligne_tableau = "Date        | Tmax | Pluie | ET0 | Radiation\n"
-ligne_tableau += "-" * 50 + "\n"
-for d, t, p, e, r in passe + futur:
-    ligne_tableau += f"{d} | {t:>4.1f} | {p:>5.1f} | {e:>4.1f} | {r:>9.1f}\n"
+# ✍️ Génération du rapport
+rapport = "-----------------------------------------\n"
+rapport += "Date       | Température | Pluie (mm)\n"
+rapport += "-----------|-------------|------------\n"
 
-# Rapport final
-rapport = f"""
-📍 Rapport d'arrosage - Beauzelle
-Date : {datetime.now().strftime('%Y-%m-%d %H:%M')}
+for d, t, p in zip(dates, temp_max, precip):
+    rapport += f"{d}  |   {t:5.1f}°C    |   {p:.1f}\n"
 
-🌱 Type de plante : {type_plante}
-💧 Dernier arrosage : il y a {jours_depuis_arrosage} jour(s)
+rapport += "-----------------------------------------\n"
+rapport += f"\n🌿 Conclusion :\n"
+rapport += f"💧 Il faut arroser votre jardin si vous avez arrosé il y a plus de {seuil_arrosage} jours.\n"
 
--- Analyse Passée :
-💧 Pluie cumulée : {pluie_passe:.1f} mm
-🌤️ Evapotranspiration cumulée : {et0_passe:.1f} mm
-🌡️ Jours chauds : {chauds_passe}
-🌵 Jours secs : {secs_passe}
-
--- Prévision :
-💧 Pluie à venir : {pluie_futur:.1f} mm
-🌤️ ET0 prévue : {et0_futur:.1f} mm
-🌡️ Jours >30°C : {chauds_futur}
-
-🧠 Déficit hydrique estimé : {deficit_hydrique:.1f} mm
-💧 Recommandation : {recommandation}
-
-📊 Détail jour par jour :
-{ligne_tableau}
-"""
-
-# Sauvegarde
+# 💾 Sauvegarde dans le fichier
 with open("rapport_arrosage_openmeteo.txt", "w", encoding="utf-8") as f:
     f.write(rapport)
 
