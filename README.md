@@ -43,4 +43,4 @@ Le format du rapport
 
 📄 Licence
 Projet personnel – libre d’usage non commercial.
-Auteur : [Ton nom ou pseudo]
+Auteur : [NoFacArt]
