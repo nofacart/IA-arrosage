@@ -2,8 +2,8 @@ name: Arrosage Potager Automatique
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # Tous les jours à 08h UTC (soit 10h heure de Paris)
-  workflow_dispatch:     # Permet de lancer manuellement le workflow
+    - cron: '0 8 * * *'  # 08h UTC = 10h Paris
+  workflow_dispatch:
 
 jobs:
   run-arrosage-script:
@@ -13,6 +13,7 @@ jobs:
       EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
       EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: 📥 Cloner le dépôt
@@ -28,3 +29,16 @@ jobs:
 
       - name: 🚿 Exécuter le script d’arrosage
         run: python arrosage_potager_openmeteo.py
+
+      - name: 🔧 Configurer Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - name: 📄 Commit et push rapport
+        run: |
+          git add rapport_arrosage_openmeteo.txt
+          git commit -m "📝 Rapport auto du $(date +'%d/%m/%Y')" || echo "Aucun changement à commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
