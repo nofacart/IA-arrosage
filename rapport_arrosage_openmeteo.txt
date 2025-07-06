@@ -1,18 +1,30 @@
+📍 Météo à Beauzelle
+Analyse du 2025-06-29 au 2025-07-09
+Pluie totale passée (7j) : 0.5 mm
+Jours chauds à venir (≥30°C) : 0
 -----------------------------------------
 Date       | Température | Pluie (mm)
 -----------|-------------|------------
-2025-06-28  |    34.0°C    |   0.0
 2025-06-29  |    35.2°C    |   0.0
 2025-06-30  |    37.1°C    |   0.0
 2025-07-01  |    37.4°C    |   0.1
 2025-07-02  |    30.1°C    |   0.0
 2025-07-03  |    28.1°C    |   0.0
 2025-07-04  |    31.8°C    |   0.0
-2025-07-05  |    31.7°C    |   0.4
-2025-07-06  |    26.4°C    |   0.1
-2025-07-07  |    25.1°C    |   0.0
-2025-07-08  |    25.0°C    |   0.0
+2025-07-05  |    31.6°C    |   0.4
+2025-07-06  |    24.9°C    |   0.0
+2025-07-07  |    24.6°C    |   0.0
+2025-07-08  |    25.1°C    |   0.0
+2025-07-09  |    28.4°C    |   0.0
 -----------------------------------------
+
+🌱 Recommandations par plante :
+- Tomate : Pas besoin d’arroser si vous l’avez fait il y a moins de 2 jours.
+- Courgette : Pas besoin d’arroser si vous l’avez fait il y a moins de 2 jours.
+- Haricot vert : Pas besoin d’arroser si vous l’avez fait il y a moins de 3 jours.
+- Melon : Pas besoin d’arroser si vous l’avez fait il y a moins de 3 jours.
+- Fraise : Pas besoin d’arroser si vous l’avez fait il y a moins de 2 jours.
+- Aromatiques : Pas besoin d’arroser si vous l’avez fait il y a moins de 5 jours.
 
 🌿 Conclusion :
 💧 Il faut arroser votre jardin si vous avez arrosé il y a plus de 3 jours.
