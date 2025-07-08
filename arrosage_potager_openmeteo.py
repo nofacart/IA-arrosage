@@ -87,9 +87,9 @@ else:
     seuil = 3
 
 # 📄 Rapport
-rapport = "-----------------------------------------\n"
-rapport += "Date       | 🌡️Temp | 🌧️Pluie | 💨Vent | ☀️Rayon | ET₀ (mm)\n"
-rapport += "-----------|--------|--------|--------|---------|---------\n"
+rapport = "------------------------------------------------------------\n"
+rapport += "Date       | 🌡️Temp  | 🌧️Pluie | 💨Vent | ☀️Rayon | ET₀ (mm)\n"
+rapport += "-----------|--------|----------|--------|----------|---------\n"
 for i in range(len(dates)):
     rapport += (
         f"{dates[i]} | {temp_max[i]:5.1f}°C | {precip[i]:5.1f}mm | "
