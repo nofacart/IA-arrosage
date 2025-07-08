@@ -1,93 +1,139 @@
 import streamlit as st
-import os
 import requests
 import pandas as pd
-import plotly.graph_objects as go
 from datetime import datetime
+import json
+import os
 
-# --- PARAMÈTRES FIXES ---
-RAPPORT_FILE = "rapport_arrosage_openmeteo.txt"
-LAT, LON = 43.66528, 1.3775  # Beauzelle
+# === BASE_DIR : dossier où se trouve ce script ===
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# --- CONFIGURATION ---
+LAT, LON = 43.66528, 1.3775          # Beauzelle
+TIMEZONE = "Europe/Paris"
+RAPPORT_FILE = os.path.join(BASE_DIR, "rapport_arrosage_openmeteo.txt")
 
-# --- Fonction : Récupération données météo (7j passés + 7j prévus) ---
-@st.cache_data(ttl=3600)
-def charger_donnees_meteo():
-    base_url = "https://api.open-meteo.com/v1/forecast"
+# Emplacements possibles de plantes.json
+CANDIDATE_PATHS = [
+    os.path.join(BASE_DIR, "plantes.json"),
+    os.path.join(BASE_DIR, "..", "plantes.json")
+]
+
+def recuperer_donnees_meteo():
+    url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": LAT,
         "longitude": LON,
         "daily": "temperature_2m_max,precipitation_sum",
         "past_days": 7,
         "forecast_days": 7,
-        "timezone": "Europe/Paris"
+        "timezone": TIMEZONE
     }
-    response = requests.get(base_url, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        df = pd.DataFrame({
-            "date": pd.to_datetime(data["daily"]["time"]),
-            "temp_max": data["daily"]["temperature_2m_max"],
-            "pluie": data["daily"]["precipitation_sum"]
-        })
-        return df
+    resp = requests.get(url, params=params)
+    resp.raise_for_status()
+    data = resp.json()
+    return pd.DataFrame({
+        "date": pd.to_datetime(data["daily"]["time"]),
+        "temp_max": data["daily"]["temperature_2m_max"],
+        "pluie": data["daily"]["precipitation_sum"]
+    })
+
+def charger_plantes():
+    for path in CANDIDATE_PATHS:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    plantes = json.load(f)
+                st.success(f"✅ Plantes chargées depuis {path}")
+                return plantes
+            except Exception as e:
+                st.error(f"❌ Erreur lecture {path} : {e}")
+    exemple = {
+        "tomate": {"seuil_jours": 3},
+        "courgette": {"seuil_jours": 3},
+        "haricot vert": {"seuil_jours": 3},
+        "melon": {"seuil_jours": 3},
+        "fraise": {"seuil_jours": 3},
+        "aromatiques": {"seuil_jours": 3},
+    }
+    st.warning("⚠️ Aucun plantes.json trouvé. Utilisation d'un exemple minimal.")
+    return exemple
+
+def generer_rapport(df, plantes, jours_depuis_arrosage):
+    today = pd.to_datetime(datetime.now().date())
+    df_passe = df[df["date"] < today]
+    df_futur = df[df["date"] >= today]
+
+    pluie_total_passe = df_passe["pluie"].sum()
+    pluie_total_futur = df_futur["pluie"].sum()
+    jours_chauds = (df_passe["temp_max"] >= 28).sum()
+
+    if pluie_total_passe + pluie_total_futur >= 10:
+        seuil_arrosage_global = 5
+    elif jours_chauds >= 3:
+        seuil_arrosage_global = 2
     else:
-        st.error(f"Erreur lors du chargement météo : {response.status_code}")
-        return pd.DataFrame()
+        seuil_arrosage_global = 3
 
+    besoin_arrosage_global = (pluie_total_passe < 5 and jours_chauds >= 2)
 
-# --- INTERFACE STREAMLIT ---
-st.set_page_config(page_title="Assistant Arrosage", page_icon="🌿")
-st.title("🌿 Assistant d’Arrosage du Potager")
-st.markdown("Suivi météo automatisé & recommandations d’arrosage.")
-
-# --- Rapport météo/arrosage ---
-st.subheader("📝 Rapport météo et recommandation")
-if os.path.exists(RAPPORT_FILE):
-    with open(RAPPORT_FILE, "r", encoding="utf-8") as f:
-        rapport = f.read()
-    st.text(rapport)
-else:
-    st.warning("Aucun rapport trouvé. Veuillez exécuter le script d’arrosage.")
-
-# --- Graphique météo (Open-Meteo) ---
-st.subheader("📊 Évolution météo (14 jours)")
-df_meteo = charger_donnees_meteo()
-
-if not df_meteo.empty:
-    fig = go.Figure()
-
-    fig.add_trace(go.Bar(
-        x=df_meteo["date"],
-        y=df_meteo["pluie"],
-        name="Pluie (mm)",
-        marker_color='skyblue',
-        yaxis="y"
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=df_meteo["date"],
-        y=df_meteo["temp_max"],
-        name="Température max (°C)",
-        mode="lines+markers",
-        line=dict(color='tomato', width=2),
-        yaxis="y2"
-    ))
-
-    fig.update_layout(
-        title="Température & Précipitations (7 jours passés + 7 jours prévus)",
-        xaxis_title="Date",
-        yaxis=dict(title="Pluie (mm)", side="left"),
-        yaxis2=dict(title="Température max (°C)", overlaying="y", side="right"),
-        legend=dict(x=0.01, y=1.2, orientation="h"),
-        margin=dict(t=50, b=20),
-        height=400
+    header = (
+        f"📍 Météo à Beauzelle\n"
+        f"-----------------------------------------\n"
+        f"Période analysée : {df['date'].min().date()} → {df['date'].max().date()}\n"
+        f"Pluie totale passée (7j) : {pluie_total_passe:.1f} mm\n"
+        f"Pluie totale à venir (7j) : {pluie_total_futur:.1f} mm\n"
+        f"Jours chauds (≥28°C sur passé) : {jours_chauds}\n"
+        f"Seuil arrosage global ajusté : {seuil_arrosage_global} jours\n"
     )
 
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Chargement des données météo en attente...")
+    tableau = (
+        "\n-----------------------------------------\n"
+        "Date       | Température | Pluie (mm)\n"
+        "-----------|-------------|------------"
+    )
+    for _, row in df.iterrows():
+        date_str = row["date"].strftime("%d/%m/%Y")
+        tableau += f"\n{date_str}  |   {row['temp_max']:5.1f}°C    |   {row['pluie']:5.1f}"
 
-# --- Footer ---
-st.markdown("---")
-st.markdown("Développé avec ❤️ pour le potager de Beauzelle 🌻")
+    conclusion = "\n\n🌱 Recommandations personnalisées par plante :\n"
+    for plante, infos in plantes.items():
+        seuil = infos.get("seuil_jours", seuil_arrosage_global)
+        nom = plante.capitalize()
+        if besoin_arrosage_global and jours_depuis_arrosage > seuil:
+            conclusion += f"- {nom} : Il faut arroser, vous avez arrosé il y a {jours_depuis_arrosage} jours (> seuil {seuil}).\n"
+        else:
+            conclusion += f"- {nom} : Pas besoin d'arroser (arrosé il y a {jours_depuis_arrosage} jours, seuil {seuil}).\n"
+
+    rapport = header + tableau + conclusion
+
+    with open(RAPPORT_FILE, "w", encoding="utf-8") as f:
+        f.write(rapport)
+
+    return rapport
+
+# --- STREAMLIT APP ---
+st.title("🌱 Arrosage Potager - Recommandations personnalisées")
+
+try:
+    df_meteo = recuperer_donnees_meteo()
+    plantes = charger_plantes()
+
+    st.markdown("### 🌤️ Données météo (7 derniers jours + 7 prochains jours)")
+    st.dataframe(df_meteo.style.format({"temp_max": "{:.1f} °C", "pluie": "{:.1f} mm"}))
+
+    # Slider ici pour sélectionner les jours depuis dernier arrosage
+    jours_depuis_arrosage = st.slider(
+        "Il y a combien de jours que vous avez arrosé votre jardin ?",
+        min_value=0, max_value=30, value=3, step=1
+    )
+
+    rapport = generer_rapport(df_meteo, plantes, jours_depuis_arrosage)
+
+    st.markdown("### 📄 Rapport généré")
+    st.text(rapport)
+
+    st.success(f"✅ Rapport sauvegardé dans : {RAPPORT_FILE}")
+
+except Exception as err:
+    st.error(f"❌ Une erreur est survenue : {err}")
