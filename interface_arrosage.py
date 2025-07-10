@@ -27,12 +27,12 @@ def charger_plantes():
             except Exception:
                 continue
     return {
-        "tomate": {"seuil_jours": 2},
-        "courgette": {"seuil_jours": 2},
-        "haricot vert": {"seuil_jours": 3},
-        "melon": {"seuil_jours": 3},
-        "fraise": {"seuil_jours": 2},
-        "aromatiques": {"seuil_jours": 5},
+        "tomate": {"kc": 1.15},
+        "courgette": {"kc": 1.05},
+        "haricot vert": {"kc": 1.0},
+        "melon": {"kc": 1.05},
+        "fraise": {"kc": 1.05},
+        "aromatiques": {"kc": 0.7}
     }
 
 def recuperer_meteo():
@@ -57,9 +57,7 @@ def recuperer_meteo():
         "evapo": d.get("et0_fao_evapotranspiration", [None]*len(d["time"]))
     })
 
-def color_band(arroser):
-    return "background-color: #FFA500;" if arroser else "background-color: #87CEEB;"
-
+# === APP START ===
 st.set_page_config(page_title="🌿 Arrosage potager", layout="wide")
 st.title("🌿 Aide à l’arrosage du potager")
 
@@ -69,29 +67,61 @@ try:
     today = pd.to_datetime(datetime.now().date())
     df["jour"] = df["date"].dt.strftime("%d/%m")
 
-    # Section météo résumé
-    st.subheader("📊 Données météo")
+    # --- Résumé météo ---
+    st.subheader("📊 Données météo récentes")
     df_past = df[df["date"] < today]
     pluie_passe = df_past["pluie"].sum()
     jours_chauds = (df_past["temp_max"] >= 28).sum()
     evapo_passe = df_past["evapo"].sum()
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Pluie (7 jours passés)", f"{pluie_passe:.1f} mm")
-    col2.metric("Jours chauds (≥28°C)", f"{jours_chauds}")
+    col1.metric("Pluie (7 derniers jours)", f"{pluie_passe:.1f} mm")
+    col2.metric("Jours ≥28°C", f"{jours_chauds}")
     col3.metric("Évapotranspiration", f"{evapo_passe:.1f} mm")
 
-    # Tableau météo avec jour actuel en gras
-    st.markdown("### 📅 Tableau météo")
     df_display = df[["jour", "temp_max", "pluie", "evapo", "radiation", "vent"]].copy()
     df_display.columns = ["Jour", "Temp (°C)", "Pluie (mm)", "Évapo", "Radiation", "Vent (km/h)"]
 
-    def highlight_today(row):
-        return ['font-weight: bold; background-color: #d0f0ff' if row["Jour"] == today.strftime("%d/%m") else '' for _ in row]
+    st.markdown("### 📅 Météo en cartes")
 
-    st.dataframe(df_display.style.apply(highlight_today, axis=1), height=350)
+    for idx, row in df_display.iterrows():
+        jour = row["Jour"]
+        temp = row["Temp (°C)"]
+        pluie = row["Pluie (mm)"]
+        evapo = row["Évapo"]
+        radiation = row["Radiation"]
+        vent = row["Vent (km/h)"]
 
-    # Graphique temperature + pluie
+        is_today = (jour == today.strftime("%d/%m"))
+        card_style = (
+            "background-color: #d0f0ff; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
+            if is_today else
+            "background-color: #f9f9f9;"
+        )
+
+        st.markdown(f"""
+        <div style="
+            {card_style}
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        ">
+            <div style="flex: 1; min-width: 70px;">📅 <b>{jour}</b></div>
+            <div style="flex: 1; color: crimson; min-width: 90px;">🌡️ {temp} °C</div>
+            <div style="flex: 1; color: royalblue; min-width: 90px;">🌧️ {pluie:.1f} mm</div>
+            <div style="flex: 1; min-width: 90px;">💧 {evapo:.1f}</div>
+            <div style="flex: 1; min-width: 90px;">☀️ {int(radiation) if radiation else '-'} W/m²</div>
+            <div style="flex: 1; min-width: 90px;">🌬️ {int(vent) if vent else '-'} km/h</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+
+    # --- Graphique température + pluie ---
     st.markdown("### 📈 Température & Pluie")
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(go.Scatter(
@@ -112,41 +142,90 @@ try:
     fig.update_yaxes(title_text="🌧️ Pluie (mm)", secondary_y=True)
     st.plotly_chart(fig, use_container_width=True)
 
-    # Slider jours depuis dernier arrosage
-    st.subheader("🧮 Indiquez depuis combien de jours vous avez arrosé")
-    jours_depuis = st.slider("Jours depuis le dernier arrosage", 0, 14, 3)
+    # --- Paramètres utilisateur ---
+    st.subheader("🧮 Paramètres de votre jardin")
+    type_sol = st.selectbox("Type de sol :", ["Limoneux", "Sableux", "Argileux"])
+    paillage = st.checkbox("Présence de paillage")
+    jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
 
-    # Calcul recommandations
-    st.markdown("### 🌱 Recommandations personnalisées")
+    facteur_sol = {
+        "Sableux": 1.3,
+        "Limoneux": 1.0,
+        "Argileux": 0.9
+    }.get(type_sol, 1.0)
+    facteur_paillage = 0.7 if paillage else 1.0
+
+    # --- Seuil déficit dynamique selon le type de sol ---
+    SEUILS_DEFICIT_SOL = {
+        "Sableux": 10,
+        "Limoneux": 20,
+        "Argileux": 30
+    }
+    SEUIL_DEFICIT = SEUILS_DEFICIT_SOL.get(type_sol, 20)
+    st.caption(f"💧 Seuil de déficit pour arrosage ({type_sol.lower()}) : {SEUIL_DEFICIT} mm")
+
+    # --- Alertes météo intelligentes ---
+    df_futur = df[df["date"] > today]
+    jours_chauds_a_venir = (df_futur["temp_max"] >= 30).sum()
+    pluie_prochaine_48h = df_futur.head(2)["pluie"].sum()
+
+    if jours_chauds_a_venir >= 2:
+        st.warning(f"🔥 Attention : {jours_chauds_a_venir} jours à venir avec ≥30°C. Anticipez un éventuel stress hydrique.")
+    if pluie_prochaine_48h >= 10:
+        st.info(f"🌧️ Bonne nouvelle : {pluie_prochaine_48h:.1f} mm de pluie attendus dans les 48h. Vous pouvez peut-être attendre avant d’arroser.")
+
+    # --- Calcul recommandations ---
+    st.markdown("## 🌱 Recommandations personnalisées")
     table_data = []
+
     for plante, infos in plantes.items():
-        seuil = infos.get("seuil_jours", 3)
+        kc = infos.get("kc", 1.0)
         nom = plante.capitalize()
 
-        if jours_depuis <= seuil:
+        date_depuis = today - pd.Timedelta(days=jours_depuis)
+        date_jusqua = today + pd.Timedelta(days=3)
+        df_analyse = df[(df["date"] >= date_depuis) & (df["date"] <= date_jusqua)]
+
+        pluie_totale = df_analyse["pluie"].sum()
+        et0_total = df_analyse["evapo"].sum()
+        besoin_total = et0_total * kc * facteur_sol * facteur_paillage
+        bilan = pluie_totale - besoin_total
+        deficit = -bilan if bilan < 0 else 0
+
+        # Projection pluie dans les 3 prochains jours
+        df_prevision = df_analyse[df_analyse["date"] > today]
+        pluie_prochaine = df_prevision["pluie"].sum()
+
+        # Détermination besoin d'arrosage
+        if deficit == 0:
             besoin = False
+            infos_bilan = f"✅ Excédent : {bilan:.1f} mm"
+        elif deficit <= SEUIL_DEFICIT:
+            besoin = False
+            infos_bilan = f"🤏 Déficit léger : {deficit:.1f} mm"
         else:
-            date_depuis = today - pd.Timedelta(days=jours_depuis - seuil)
-            df_depuis = df[df.date >= date_depuis]
-            pluie = df_depuis["pluie"].sum()
-            jours_chauds_loc = (df_depuis["temp_max"] >= 28).sum()
-            evapo = df_depuis["evapo"].sum()
-            besoin = pluie < 5 and (jours_chauds_loc >= 1 or evapo >= 10)
+            if pluie_prochaine >= deficit:
+                besoin = False
+                infos_bilan = f"🌧️ Pluie prévue ({pluie_prochaine:.1f} mm) compensera"
+            else:
+                besoin = True
+                infos_bilan = f"💧 Déficit : {deficit:.1f} mm"
 
         couleur = "🟧" if besoin else "🟦"
         msg = "Arroser" if besoin else "Pas besoin"
+
         table_data.append({
             "Plante": nom,
             "Recommandation": msg,
             "Couleur": couleur,
-            "Infos": f"Arrosé il y a {jours_depuis} jours, seuil {seuil}"
+            "Détail": infos_bilan
         })
 
-    # Affichage dynamique avec couleurs orange / bleu
+    # --- Affichage recommandations ---
     for ligne in table_data:
         color = "#FFA500" if ligne["Couleur"] == "🟧" else "#87CEEB"
         st.markdown(f"<div style='background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
-                    f"**{ligne['Plante']}** : {ligne['Recommandation']} ({ligne['Infos']})"
+                    f"<b>{ligne['Plante']}</b> : {ligne['Recommandation']} – {ligne['Détail']}"
                     f"</div>", unsafe_allow_html=True)
 
 except Exception as e:

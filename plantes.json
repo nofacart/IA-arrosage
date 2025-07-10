@@ -1,26 +1,8 @@
 {
-  "tomate": {
-    "besoin_eau": "élevé",
-    "seuil_jours": 2
-  },
-  "courgette": {
-    "besoin_eau": "élevé",
-    "seuil_jours": 2
-  },
-  "haricot vert": {
-    "besoin_eau": "moyen",
-    "seuil_jours": 3
-  },
-  "melon": {
-    "besoin_eau": "moyen",
-    "seuil_jours": 3
-  },
-  "fraise": {
-    "besoin_eau": "élevé",
-    "seuil_jours": 2
-  },
-  "aromatiques": {
-    "besoin_eau": "faible",
-    "seuil_jours": 5
-  }
+  "tomate": { "kc": 1.15 },
+  "courgette": { "kc": 1.05 },
+  "haricot vert": { "kc": 1.0 },
+  "melon": { "kc": 1.05 },
+  "fraise": { "kc": 1.05 },
+  "aromatiques": { "kc": 0.7 }
 }
