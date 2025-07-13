@@ -97,6 +97,8 @@ try:
 
         type_sol = st.selectbox("Type de sol :", ["Limoneux", "Sableux", "Argileux"])
         paillage = st.checkbox("Présence de paillage")
+    
+    with st.expander("💧 Arrosage", expanded=True):
         jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
 
     # Appel dynamique avec coordonnées
