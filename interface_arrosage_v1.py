@@ -115,40 +115,7 @@ try:
     plantes = charger_plantes()
     today = pd.to_datetime(datetime.now().date())
 
-    JOURNAL_PATH = os.path.join(BASE_DIR, "journal_jardin.json")
-
-    def charger_journal():
-        if os.path.exists(JOURNAL_PATH):
-            with open(JOURNAL_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return {"arrosages": [], "tontes": []}
-
-    def sauvegarder_journal(data):
-        with open(JOURNAL_PATH, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-    journal = charger_journal()
-
-    with st.expander("📆 Suivi journalier", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✅ J’ai arrosé aujourd’hui"):
-                journal["arrosages"].append(str(today.date()))
-                sauvegarder_journal(journal)
-                st.success("💧 Arrosage enregistré.")
-        with col2:
-            if st.button("✂️ J’ai tondu aujourd’hui"):
-                journal["tontes"].append(str(today.date()))
-                sauvegarder_journal(journal)
-                st.success("✂️ Tonte enregistrée.")
-
-        if journal["arrosages"]:
-            st.markdown(f"**Dernier arrosage enregistré :** {journal['arrosages'][-1]}")
-        if journal["tontes"]:
-            st.markdown(f"**Dernière tonte enregistrée :** {journal['tontes'][-1]}")
-
-
-    with st.expander("🛠️ Paramètres de votre jardin", expanded=False):
+    with st.expander("🛠️ Paramètres de votre jardin", expanded=True):
         ville = st.text_input("Ville ou commune :", "Beauzelle")
         infos_ville = get_coords_from_city(ville)
 
@@ -164,27 +131,15 @@ try:
         type_sol = st.selectbox("Type de sol :", ["Limoneux", "Sableux", "Argileux"])
         paillage = st.checkbox("Présence de paillage")
     
-    with st.expander("💧 Arrosage", expanded=False):
-        if journal["arrosages"]:
-            date_dernier_arrosage = pd.to_datetime(journal["arrosages"][-1])
-            jours_depuis = (today - date_dernier_arrosage).days
-            st.markdown(f"💧 Dernier arrosage enregistré : il y a **{jours_depuis} jour(s)**")
-        else:
-            jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
+    with st.expander("💧 Arrosage", expanded=True):
+        jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
 
     df = recuperer_meteo(LAT, LON)
     df["jour"] = df["date"].dt.strftime("%d/%m")
 
     # === Bloc tonte de pelouse ===
-    with st.expander("✂️ Tonte de la pelouse", expanded=False):
-        if journal["tontes"]:
-            date_dernier_tonte = pd.to_datetime(journal["tontes"][-1])
-            jours_depuis_tonte = (today - date_dernier_tonte).days
-            st.markdown(f"✂️ Dernière tonte enregistrée : il y a **{jours_depuis_tonte} jour(s)**")
-        else:
-            jours_depuis_tonte = st.slider("Jours depuis la dernière tonte :", 1, 21, 7)
-            date_dernier_tonte = today - pd.Timedelta(days=jours_depuis_tonte)
-
+    with st.expander("✂️ Tonte de la pelouse", expanded=True):
+        jours_depuis_tonte = st.slider("Jours depuis la dernière tonte :", 1, 21, 7)
         hauteur_cible_cm = st.slider("Hauteur cible de pelouse (cm) :", 3, 8, 5)
 
         date_dernier_tonte = today - pd.Timedelta(days=jours_depuis_tonte)
@@ -211,6 +166,13 @@ try:
 
     st.markdown(f"📏 Hauteur estimée actuelle : **{hauteur_estimee_cm:.1f} cm**")
 
+    if hauteur_estimee_cm > 1.5 * hauteur_cible_cm:
+        st.warning("✂️ Tonte recommandée : l’herbe a trop poussé")
+    elif hauteur_estimee_cm > hauteur_cible_cm:
+        st.info("🔍 Surveillez : la tonte pourrait bientôt être utile")
+    else:
+        st.success("✅ Pas besoin de tondre actuellement")
+
     facteur_sol = {"Sableux": 1.3, "Limoneux": 1.0, "Argileux": 0.9}.get(type_sol, 1.0)
     facteur_paillage = 0.7 if paillage else 1.0
 
@@ -221,6 +183,11 @@ try:
     df_futur = df[(df["date"] > today) & (df["date"] <= today + pd.Timedelta(days=3))]
     jours_chauds_a_venir = (df_futur["temp_max"] >= 30).sum()
     pluie_prochaine_48h = df_futur.head(2)["pluie"].sum()
+
+    if jours_chauds_a_venir >= 2:
+        st.warning(f"🔥 {jours_chauds_a_venir} jour(s) ≥30°C à venir.")
+    if pluie_prochaine_48h >= 10:
+        st.info(f"🌧️ {pluie_prochaine_48h:.1f} mm de pluie attendus dans les 48h.")
 
     table_data = []
     for plante, infos in plantes.items():
@@ -262,18 +229,6 @@ try:
         })
 
     st.markdown("### 🔍 Résumé du jour")
-    if jours_chauds_a_venir >= 2:
-        st.warning(f"🔥 {jours_chauds_a_venir} jour(s) ≥30°C à venir.")
-    if pluie_prochaine_48h >= 10:
-        st.info(f"🌧️ {pluie_prochaine_48h:.1f} mm de pluie attendus dans les 48h.")
-
-    if hauteur_estimee_cm > 1.5 * hauteur_cible_cm:
-        st.warning("✂️ Tonte recommandée : l’herbe a trop poussé")
-    elif hauteur_estimee_cm > hauteur_cible_cm:
-        st.info("🔍 Surveillez : la tonte pourrait bientôt être utile")
-    else:
-        st.success("✅ Pas besoin de tondre actuellement")
-
     recommandations = [p for p in table_data if p["Recommandation"] == "Arroser"]
     if recommandations:
         st.error(f"💧 {len(recommandations)} plante(s) à arroser aujourd’hui")
