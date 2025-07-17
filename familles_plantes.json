@@ -1,0 +1,46 @@
+{
+  "Tomates et apparentés": {
+    "kc": 1.15,
+    "plantes": ["tomate"]
+  },
+  "Cucurbitacées moyennes": {
+    "kc": 1.05,
+    "plantes": ["courgette", "melon", "concombre", "potimarron"]
+  },
+  "Légumineuses feuillues": {
+    "kc": 1.00,
+    "plantes": ["haricot vert", "pois", "fève"]
+  },
+  "Solanacées modérées": {
+    "kc": 1.00,
+    "plantes": ["aubergine", "poivron"]
+  },
+  "Salades et feuillues gourmandes": {
+    "kc": 1.00,
+    "plantes": ["laitue", "épinard", "bette", "mâche"]
+  },
+  "Racines moyennes": {
+    "kc": 0.90,
+    "plantes": ["carotte", "radis", "betterave", "panais", "navet"]
+  },
+  "Aromatiques peu exigeantes": {
+    "kc": 0.70,
+    "plantes": ["thym", "romarin", "sauge", "origan"]
+  },
+  "Aromatiques plus soiffardes": {
+    "kc": 0.85,
+    "plantes": ["basilic", "menthe", "coriandre", "persil", "cerfeuil"]
+  },
+  "Choux et crucifères": {
+    "kc": 0.95,
+    "plantes": ["chou", "brocoli", "chou-fleur", "chou-rave"]
+  },
+  "Alliacées": {
+    "kc": 0.85,
+    "plantes": ["oignon", "ail", "échalote", "poireau"]
+  },
+  "Fraises": {
+    "kc": 1.05,
+    "plantes": ["fraise"]
+  }
+}

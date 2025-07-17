@@ -9,6 +9,22 @@ from datetime import datetime
 # === BASE_DIR ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# === Fichier de paramètres utilisateur ===
+PARAM_PATH = os.path.join(BASE_DIR, "parametres_utilisateur.json")
+
+def charger_preferences_utilisateur():
+    if os.path.exists(PARAM_PATH):
+        try:
+            with open(PARAM_PATH, "r", encoding="utf-8") as f:
+                return json.load(f).get("plantes", [])
+        except Exception:
+            return []
+    return []
+
+def enregistrer_preferences_utilisateur(plantes_choisies):
+    with open(PARAM_PATH, "w", encoding="utf-8") as f:
+        json.dump({"plantes": plantes_choisies}, f, ensure_ascii=False, indent=2)
+
 @st.cache_data(ttl=3600)
 def get_coords_from_city(city_name):
     url = "https://geocoding-api.open-meteo.com/v1/search"
@@ -49,22 +65,21 @@ CANDIDATE_PATHS = [
     os.path.join(BASE_DIR, "..", "plantes.json")
 ]
 
-def charger_plantes():
-    for path in CANDIDATE_PATHS:
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                continue
-    return {
-        "tomate": {"kc": 1.15},
-        "courgette": {"kc": 1.05},
-        "haricot vert": {"kc": 1.0},
-        "melon": {"kc": 1.05},
-        "fraise": {"kc": 1.05},
-        "aromatiques": {"kc": 0.7}
-    }
+def charger_familles():
+    path = os.path.join(BASE_DIR, "familles_plantes.json")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def construire_index_plantes(familles):
+    index = {}
+    for famille, infos in familles.items():
+        for plante in infos["plantes"]:
+            index[plante] = {
+                "famille": famille,
+                "kc": infos["kc"]
+            }
+    return index
+
 
 # 📊 Récupération des données météo
 @st.cache_data(ttl=3600)
@@ -112,8 +127,11 @@ st.set_page_config(page_title="🌿 Arrosage potager", layout="centered")
 st.title("🌿 Aide au jardinage")
 
 try:
-    plantes = charger_plantes()
     today = pd.to_datetime(datetime.now().date())
+
+    familles = charger_familles()
+    plantes_index = construire_index_plantes(familles)
+
 
     JOURNAL_PATH = os.path.join(BASE_DIR, "journal_jardin.json")
 
@@ -147,6 +165,18 @@ try:
         if journal["tontes"]:
             st.markdown(f"**Dernière tonte enregistrée :** {journal['tontes'][-1]}")
 
+    with st.expander("🌱 Mon potager", expanded=False):
+        toutes_les_plantes = sorted(plantes_index.keys())
+        plantes_par_defaut = charger_preferences_utilisateur()
+        plantes_choisies = st.multiselect(
+            "Sélectionnez les plantes cultivées :",
+            toutes_les_plantes,
+            default=plantes_par_defaut
+        )
+        enregistrer_preferences_utilisateur(plantes_choisies)
+        if st.button("🔁 Réinitialiser la sélection de plantes"):
+            enregistrer_preferences_utilisateur([])
+            st.experimental_rerun()
 
     with st.expander("🛠️ Paramètres de votre jardin", expanded=False):
         ville = st.text_input("Ville ou commune :", "Beauzelle")
@@ -222,18 +252,31 @@ try:
     jours_chauds_a_venir = (df_futur["temp_max"] >= 30).sum()
     pluie_prochaine_48h = df_futur.head(2)["pluie"].sum()
 
+    
+    # === Calcul des recommandations d’arrosage par famille cultivée ===
     table_data = []
-    for plante, infos in plantes.items():
-        kc = infos.get("kc", 1.0)
-        nom = plante.capitalize()
-        date_depuis = today - pd.Timedelta(days=jours_depuis)
 
+    for code_famille, infos_famille in familles.items():
+        plantes_de_cette_famille = infos_famille["plantes"]
+        if not any(p in plantes_choisies for p in plantes_de_cette_famille):
+            continue  # Aucune plante de cette famille n'est cultivée
+
+        kc = infos_famille["kc"]
+        # Liste des plantes de cette famille sélectionnées par l’utilisateur
+        plantes_cultivees_famille = [p.capitalize() for p in plantes_de_cette_famille if p in plantes_choisies]
+
+        # Nom d'affichage = liste des plantes
+        nom_affiche = ", ".join(plantes_cultivees_famille)
+
+
+        date_depuis = today - pd.Timedelta(days=jours_depuis)
         df_passe = df[(df["date"] >= date_depuis) & (df["date"] <= today)]
         pluie_totale = df_passe["pluie"].sum()
         et0_total = df_passe["evapo"].sum()
+
         besoin_total = et0_total * kc * facteur_sol * facteur_paillage
         bilan = pluie_totale - besoin_total
-        deficit = -bilan if bilan < 0 else 0
+        deficit = max(-bilan, 0)
 
         pluie_prochaine = df_futur["pluie"].sum()
 
@@ -255,11 +298,12 @@ try:
         msg = "Arroser" if besoin else "Pas besoin"
 
         table_data.append({
-            "Plante": nom,
+            "Plante": nom_affiche,
             "Recommandation": msg,
             "Couleur": couleur,
             "Détail": infos_bilan
         })
+
 
     st.markdown("### 🔍 Résumé du jour")
     if jours_chauds_a_venir >= 2:
