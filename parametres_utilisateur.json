@@ -8,5 +8,8 @@
     "tomate",
     "origan",
     "romarin"
-  ]
+  ],
+  "sol": "Limoneux",
+  "paillage": true,
+  "type_sol": "Limoneux"
 }
