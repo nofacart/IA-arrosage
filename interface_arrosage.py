@@ -457,34 +457,82 @@ try:
 
     # === 🔍 SYNTHÈSE RAPIDE DU JOUR ===
     st.markdown("### 🔍 Résumé du jour")
+
     # 🔍 Données météo du jour
     meteo_auj = df[df["date"] == today]
     if not meteo_auj.empty:
         temp = meteo_auj["temp_max"].values[0]
         pluie = meteo_auj["pluie"].values[0]
-        st.markdown(f"🌡️ **Température max :** {temp}°C  \n"
-                    f"🌧️ **Précipitations :** {pluie:.1f} mm")
 
+        meteo_html = f"""
+        <div style='padding:10px; background-color:#f8f9fa; border-radius:6px; margin-bottom:10px;'>
+            <p>🌡️ <b>Température max :</b> {temp}°C</p>
+            <p>🌧️ <b>Précipitations :</b> {pluie:.1f} mm</p>
+        </div>
+        """
+        st.markdown(meteo_html, unsafe_allow_html=True)
+
+    # 🔥 Alerte chaleur
     if jours_chauds_a_venir >= 2:
-        st.warning(f"🔥 {jours_chauds_a_venir} jour(s) ≥30°C à venir.")
-    if pluie_prochaine_48h >= 10:
-        st.info(f"🌧️ {pluie_prochaine_48h:.1f} mm de pluie dans les 48h.")
+        st.markdown(f"""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            🔥 <b>{jours_chauds_a_venir} jour(s) ≥30°C à venir</b>
+        </div>
+        """, unsafe_allow_html=True)
 
+    # 🌧️ Pluie à venir
+    if pluie_prochaine_48h >= 10:
+        st.markdown(f"""
+        <div style='background-color:#d1ecf1; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            🌧️ <b>{pluie_prochaine_48h:.1f} mm de pluie dans les 48h</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 💧 Arrosage
+    if any(p["Recommandation"] == "Arroser" for p in table_data):
+        nb = sum(p["Recommandation"] == "Arroser" for p in table_data)
+        st.markdown(f"""
+        <div style='background-color:#f8d7da; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            💧 <b>{nb} plante(s) à arroser aujourd’hui</b>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✅ <b>Aucune plante à arroser</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ✂️ Tonte
     seuil_tonte_cm = hauteur_initiale * 1.5
     seuil_surveillance_cm = hauteur_initiale * 1.2
-    if any(p["Recommandation"] == "Arroser" for p in table_data):
-        st.error(f"💧 {len([p for p in table_data if p['Recommandation'] == 'Arroser'])} plante(s) à arroser aujourd’hui")
-    else:
-        st.success("✅ Aucune plante à arroser")
 
     if hauteur_estimee_cm >= seuil_tonte_cm:
-        st.warning("✂️ Tonte recommandée : la hauteur dépasse le seuil conseillé")
+        st.markdown("""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✂️ <b>Tonte recommandée :</b> la hauteur dépasse le seuil conseillé
+        </div>
+        """, unsafe_allow_html=True)
     elif hauteur_estimee_cm >= seuil_surveillance_cm:
-        st.info("🔍 Surveillez : la tonte pourrait bientôt être nécessaire")
+        st.markdown("""
+        <div style='background-color:#d1ecf1; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            🔍 <b>Surveillez :</b> la tonte pourrait bientôt être nécessaire
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        st.success("✅ Pas besoin de tondre actuellement")
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✅ <b>Pas besoin de tondre actuellement</b>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown(f"📏 Hauteur estimée actuelle : **{hauteur_estimee_cm:.1f} cm**")
+    # 📏 Hauteur actuelle
+    st.markdown(f"""
+    <p style='margin-top:10px;'>
+    📏 <b>Hauteur estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
+    </p>
+    """, unsafe_allow_html=True)
+
 
     # === 🌱 AFFICHAGE DES RECOMMANDATIONS PAR PLANTE ===
     st.markdown("## 🌱 Recommandations détaillées")
@@ -497,7 +545,7 @@ try:
     
     # === 📅 LES PREVISIONS ===
     st.markdown("### 📅 Prévisions du potager et météo")
-        # 📅 Prochain arrosage estimé (le plus urgent)
+    # 📅 Prochain arrosage estimé (le plus urgent)
     date_prochain_arrosage = estimer_arrosage_le_plus_contraignant(
         df[df["date"] > today],
         plantes_choisies,
@@ -509,17 +557,37 @@ try:
 
     if date_prochain_arrosage:
         nb_jours = (date_prochain_arrosage - today).days
-        st.markdown(f"📆 Prochain arrosage estimé dans {nb_jours} jour(s) – {format_date(date_prochain_arrosage, format='full', locale='fr')}")
+        st.markdown(f"""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            💧 <b>Prochain arrosage estimé :</b> dans {nb_jours} jour(s)<br>
+            📆 <i>{format_date(date_prochain_arrosage, format='full', locale='fr')}</i>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        st.markdown("✅ Aucun arrosage estimé nécessaire dans les prochains jours.")
-    
-     # 📅 Estimation de la prochaine tonte
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✅ <b>Aucun arrosage estimé nécessaire dans les prochains jours</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 📅 Estimation de la prochaine tonte
     df_futur_tonte = df[df["date"] > today]
     date_prochaine_tonte = estimer_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
+
     if date_prochaine_tonte:
-        st.markdown(f"📅 Prochaine tonte estimée : **{format_date(date_prochaine_tonte, format='full', locale='fr')}**")
+        st.markdown(f"""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✂️ <b>Prochaine tonte estimée :</b><br>
+            📆 <i>{format_date(date_prochaine_tonte, format='full', locale='fr')}</i>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        st.markdown("🟢 Aucune tonte prévue dans les prochains jours.")   
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            🟢 <b>Aucune tonte prévue dans les prochains jours</b>
+        </div>
+        """, unsafe_allow_html=True)
+
     
     for _, row in df.iterrows():
         jour = row["jour"]
