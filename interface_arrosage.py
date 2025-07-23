@@ -11,7 +11,7 @@ import locale
 from babel.dates import format_date
 
 # 🌍 Localisation en français pour les dates
-locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
+#locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
 
 # === Chemins de base ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
