@@ -1,11 +1,14 @@
 import streamlit as st
 import requests
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 import json
 import os
 import math
 from datetime import datetime
 import locale
+from babel.dates import format_date
 
 # 🌍 Localisation en français pour les dates
 locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
@@ -163,6 +166,99 @@ def estimer_prochaine_tonte(df_futur, hauteur_actuelle_cm, hauteur_cible_cm):
             return row["date"]
     return None  # aucune tonte prévue
 
+def afficher_evolution_pelouse(journal, df, today):
+    if not journal["tontes"]:
+        st.info("Aucune tonte enregistrée.")
+        return
+
+    # Cas où les dates sont des chaînes ou des listes
+    def parser_date_tonte(t):
+        if isinstance(t["date"], list):
+            return max(pd.to_datetime(d) for d in t["date"])
+        return pd.to_datetime(t["date"])
+
+    dates_tontes = [parser_date_tonte(t) for t in journal["tontes"]]
+    hauteurs_tontes = [t["hauteur"] for t in journal["tontes"]]
+
+    hauteur = hauteurs_tontes[0]
+    historique = []
+
+    last_tonte_index = 0
+    df_futur = df[df["date"] >= dates_tontes[0]]
+    for date in df_futur["date"]:
+        if last_tonte_index + 1 < len(dates_tontes) and date >= dates_tontes[last_tonte_index + 1]:
+            last_tonte_index += 1
+            hauteur = hauteurs_tontes[last_tonte_index]
+
+        row = df[df["date"] == date]
+        if not row.empty:
+            croissance = croissance_herbe(row["temp_max"].values[0], row["pluie"].values[0]) / 10
+            hauteur += croissance
+
+        historique.append({"date": date, "hauteur": hauteur})
+
+    df_hauteur = pd.DataFrame(historique)
+
+    # --- Affichage graphique ---
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot(df_hauteur["date"], df_hauteur["hauteur"], label="Hauteur estimée", color="green")
+    ax.scatter(dates_tontes, hauteurs_tontes, color="red", label="Tonte", zorder=5)
+    ax.axhline(y=hauteurs_tontes[-1] * 1.5, color='orange', linestyle='--', label='Seuil max conseillé')
+
+    ax.set_ylabel("Hauteur (cm)")
+    ax.set_xlabel("Date")
+    ax.set_title("Évolution estimée de la hauteur de pelouse")
+    ax.legend()
+    ax.grid(True)
+
+    # Axe X plus lisible
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m"))
+    plt.xticks(rotation=45)
+
+    st.pyplot(fig)
+
+def afficher_calendrier_frise(journal, today):
+    jours = [today - pd.Timedelta(days=i) for i in range(13, -1, -1)]
+    dates_arrosage = set(pd.to_datetime(d).date() for d in journal.get("arrosages", []))
+    dates_tonte = set(pd.to_datetime(t["date"]).date() for t in journal.get("tontes", []))
+
+    lignes = []
+    for jour in jours:
+        jour_nom = jour.strftime("%a %d").capitalize()
+        jour_date = jour.date()
+
+        if jour_date in dates_arrosage:
+            emoji = "✅"
+            action = "Arrosé"
+            couleur = "#D4EDDA"  # Vert clair
+        elif jour_date in dates_tonte:
+            emoji = "✂️"
+            action = "Tondu"
+            couleur = "#D6EAF8"  # Bleu clair
+        else:
+            emoji = "—"
+            action = "Aucune action"
+            couleur = "#F0F0F0"  # Gris clair
+
+        lignes.append(f"""
+            <div style="
+                background-color: {couleur};
+                display: inline-block;
+                padding: 6px 10px;
+                margin: 4px;
+                border-radius: 6px;
+                font-family: Segoe UI, sans-serif;
+                font-size: 0.85em;
+                text-align: center;
+                min-width: 90px;
+            ">
+                📅 <b>{jour_nom}</b><br>{emoji} {action}
+            </div>
+        """)
+
+    st.markdown("### 📅 Mon Jardin (14 jours en frise)")
+    st.markdown("".join(lignes), unsafe_allow_html=True)
+
 
 # === 🌿 CONFIGURATION GÉNÉRALE DE LA PAGE ===
 st.set_page_config(page_title="🌿 Arrosage potager", layout="centered")
@@ -287,6 +383,10 @@ try:
         hauteur_cible_cm = st.slider("Hauteur cible de pelouse (cm) :", 3, 8, 5)
         df_tonte = df[(df["date"] >= date_dernier_tonte) & (df["date"] <= today)].copy()
 
+        #st.markdown("### 📈 Suivi visuel de la hauteur de pelouse")
+        #afficher_evolution_pelouse(journal, df, today)
+
+
     # 📈 Calcul de croissance de l’herbe depuis la dernière tonte
     df_tonte["croissance"] = df_tonte.apply(
         lambda row: croissance_herbe(row["temp_max"], row["pluie"]), axis=1
@@ -295,16 +395,6 @@ try:
 
     hauteur_initiale = journal["tontes"][-1]["hauteur"] if journal["tontes"] else hauteur_tonte_input
     hauteur_estimee_cm = hauteur_initiale + (croissance_totale_mm / 10)
-
-    st.markdown(f"📏 Hauteur estimée actuelle : **{hauteur_estimee_cm:.1f} cm**")
-
-    # 📅 Estimation de la prochaine tonte
-    df_futur_tonte = df[df["date"] > today]
-    date_prochaine_tonte = estimer_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
-    if date_prochaine_tonte:
-        st.markdown(f"📅 Prochaine tonte estimée : **{pd.to_datetime(date_prochaine_tonte).strftime('%A %d %B')}**")
-    else:
-        st.markdown("🟢 Aucune tonte prévue dans les prochains jours.")
 
     # 🔥 Alerte chaleur et pluie
     df_futur = df[(df["date"] > today) & (df["date"] <= today + pd.Timedelta(days=3))]
@@ -365,7 +455,49 @@ try:
             "Détail": infos_bilan
         })
 
-    # 📅 Prochain arrosage estimé (le plus urgent)
+    # === 🔍 SYNTHÈSE RAPIDE DU JOUR ===
+    st.markdown("### 🔍 Résumé du jour")
+    # 🔍 Données météo du jour
+    meteo_auj = df[df["date"] == today]
+    if not meteo_auj.empty:
+        temp = meteo_auj["temp_max"].values[0]
+        pluie = meteo_auj["pluie"].values[0]
+        st.markdown(f"🌡️ **Température max :** {temp}°C  \n"
+                    f"🌧️ **Précipitations :** {pluie:.1f} mm")
+
+    if jours_chauds_a_venir >= 2:
+        st.warning(f"🔥 {jours_chauds_a_venir} jour(s) ≥30°C à venir.")
+    if pluie_prochaine_48h >= 10:
+        st.info(f"🌧️ {pluie_prochaine_48h:.1f} mm de pluie dans les 48h.")
+
+    seuil_tonte_cm = hauteur_initiale * 1.5
+    seuil_surveillance_cm = hauteur_initiale * 1.2
+    if any(p["Recommandation"] == "Arroser" for p in table_data):
+        st.error(f"💧 {len([p for p in table_data if p['Recommandation'] == 'Arroser'])} plante(s) à arroser aujourd’hui")
+    else:
+        st.success("✅ Aucune plante à arroser")
+
+    if hauteur_estimee_cm >= seuil_tonte_cm:
+        st.warning("✂️ Tonte recommandée : la hauteur dépasse le seuil conseillé")
+    elif hauteur_estimee_cm >= seuil_surveillance_cm:
+        st.info("🔍 Surveillez : la tonte pourrait bientôt être nécessaire")
+    else:
+        st.success("✅ Pas besoin de tondre actuellement")
+
+    st.markdown(f"📏 Hauteur estimée actuelle : **{hauteur_estimee_cm:.1f} cm**")
+
+    # === 🌱 AFFICHAGE DES RECOMMANDATIONS PAR PLANTE ===
+    st.markdown("## 🌱 Recommandations détaillées")
+    for ligne in table_data:
+        color = "#F8C17E" if ligne["Couleur"] == "🟧" else "#9EF89E"
+        emoji = "💧" if ligne["Recommandation"] == "Arroser" else "✅"
+        st.markdown(f"<div style='background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
+                    f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Recommandation']} – {ligne['Détail']}</div>",
+                    unsafe_allow_html=True)
+    
+    # === 📅 LES PREVISIONS ===
+    st.markdown("### 📅 Prévisions du potager et météo")
+        # 📅 Prochain arrosage estimé (le plus urgent)
     date_prochain_arrosage = estimer_arrosage_le_plus_contraignant(
         df[df["date"] > today],
         plantes_choisies,
@@ -377,42 +509,18 @@ try:
 
     if date_prochain_arrosage:
         nb_jours = (date_prochain_arrosage - today).days
-        st.markdown(f"📆 **Prochain arrosage estimé dans {nb_jours} jour(s)** – {date_prochain_arrosage.strftime('%A %d %B')}")
+        st.markdown(f"📆 Prochain arrosage estimé dans {nb_jours} jour(s) – {format_date(date_prochain_arrosage, format='full', locale='fr')}")
     else:
         st.markdown("✅ Aucun arrosage estimé nécessaire dans les prochains jours.")
-
-    # === 🔍 SYNTHÈSE RAPIDE DU JOUR ===
-    st.markdown("### 🔍 Résumé du jour")
-    if jours_chauds_a_venir >= 2:
-        st.warning(f"🔥 {jours_chauds_a_venir} jour(s) ≥30°C à venir.")
-    if pluie_prochaine_48h >= 10:
-        st.info(f"🌧️ {pluie_prochaine_48h:.1f} mm de pluie dans les 48h.")
-
-    seuil_tonte_cm = hauteur_initiale * 1.5
-    seuil_surveillance_cm = hauteur_initiale * 1.2
-    if hauteur_estimee_cm >= seuil_tonte_cm:
-        st.warning("✂️ Tonte recommandée : la hauteur dépasse le seuil conseillé")
-    elif hauteur_estimee_cm >= seuil_surveillance_cm:
-        st.info("🔍 Surveillez : la tonte pourrait bientôt être nécessaire")
+    
+     # 📅 Estimation de la prochaine tonte
+    df_futur_tonte = df[df["date"] > today]
+    date_prochaine_tonte = estimer_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
+    if date_prochaine_tonte:
+        st.markdown(f"📅 Prochaine tonte estimée : **{format_date(date_prochaine_tonte, format='full', locale='fr')}**")
     else:
-        st.success("✅ Pas besoin de tondre actuellement")
-
-    if any(p["Recommandation"] == "Arroser" for p in table_data):
-        st.error(f"💧 {len([p for p in table_data if p['Recommandation'] == 'Arroser'])} plante(s) à arroser aujourd’hui")
-    else:
-        st.success("✅ Aucune plante à arroser")
-
-    # === 🌱 AFFICHAGE DES RECOMMANDATIONS PAR PLANTE ===
-    st.markdown("## 🌱 Recommandations personnalisées")
-    for ligne in table_data:
-        color = "#F8C17E" if ligne["Couleur"] == "🟧" else "#9EF89E"
-        emoji = "💧" if ligne["Recommandation"] == "Arroser" else "✅"
-        st.markdown(f"<div style='background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
-                    f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Recommandation']} – {ligne['Détail']}</div>",
-                    unsafe_allow_html=True)
-
-    # === 📅 MÉTÉO ÉTENDUE SUR 14 JOURS ===
-    st.markdown("### 📅 Météo des 14 jours")
+        st.markdown("🟢 Aucune tonte prévue dans les prochains jours.")   
+    
     for _, row in df.iterrows():
         jour = row["jour"]
         is_today = (jour == today.strftime("%d/%m"))
@@ -431,6 +539,10 @@ try:
             <div>🌬️ {int(row['vent']) if row['vent'] else '-'} km/h</div>
         </div>
         """, unsafe_allow_html=True)
+
+    # === 📅 Historique ===
+    afficher_calendrier_frise(journal, today)
+
 
 except Exception as e:
     st.error(f"❌ Erreur : {e}")
