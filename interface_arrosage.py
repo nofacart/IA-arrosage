@@ -505,18 +505,11 @@ try:
 
     # ✂️ Tonte
     seuil_tonte_cm = hauteur_initiale * 1.5
-    seuil_surveillance_cm = hauteur_initiale * 1.2
 
     if hauteur_estimee_cm >= seuil_tonte_cm:
         st.markdown("""
         <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
             ✂️ <b>Tonte recommandée :</b> la hauteur dépasse le seuil conseillé
-        </div>
-        """, unsafe_allow_html=True)
-    elif hauteur_estimee_cm >= seuil_surveillance_cm:
-        st.markdown("""
-        <div style='background-color:#d1ecf1; padding:10px; border-radius:6px; margin-bottom:10px;'>
-            🔍 <b>Surveillez :</b> la tonte pourrait bientôt être nécessaire
         </div>
         """, unsafe_allow_html=True)
     else:
