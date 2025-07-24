@@ -145,26 +145,67 @@ def estimer_arrosage_le_plus_contraignant(df_futur, plantes_choisies, index_plan
     return min(dates_arrosage) if dates_arrosage else None
 
 # === Croissance de l’herbe (mm/jour) ===
-def croissance_herbe(temp_moy, pluie):
+def croissance_herbe(temp_moy, pluie, et0):
+    bilan_hydrique = pluie - et0
+
     if temp_moy < 10:
-        return 1
+        croissance = 0.5
     elif 10 <= temp_moy < 15:
-        return 2
+        croissance = 1.5
     elif 15 <= temp_moy < 25:
-        return 6 if pluie >= 2 else 4
+        croissance = 4
     elif temp_moy >= 25:
-        return 2 if pluie >= 5 else 1
-    return 3  # valeur par défaut
+        croissance = 2
+    else:
+        croissance = 1
+
+    if bilan_hydrique < -5:
+        croissance *= 0.3
+    elif bilan_hydrique < 0:
+        croissance *= 0.6
+    elif bilan_hydrique > 5:
+        croissance *= 1.2
+
+    return round(max(croissance, 0), 2)
+
 
 # === Estimation de la prochaine tonte ===
-def estimer_prochaine_tonte(df_futur, hauteur_actuelle_cm, hauteur_cible_cm):
-    hauteur = hauteur_actuelle_cm
+def estimer_date_prochaine_tonte(df_futur, hauteur_actuelle, taille_cible):
+    hauteur_limite = 1.5 * taille_cible
+    hauteur = hauteur_actuelle
+
     for _, row in df_futur.iterrows():
-        croissance_mm = croissance_herbe(row["temp_max"], row["pluie"])
-        hauteur += croissance_mm / 10  # mm → cm
-        if hauteur >= 1.5 * hauteur_cible_cm:  # règle du tiers
+        temp_moy = row["temp_max"]
+        pluie = row["pluie"]
+        evapo = row["evapo"]  # ou ET0, selon nom colonne
+
+        bilan_hydrique = pluie - evapo
+        if temp_moy < 10:
+            croissance = 0.5
+        elif 10 <= temp_moy < 15:
+            croissance = 1.5
+        elif 15 <= temp_moy < 25:
+            croissance = 4
+        elif temp_moy >= 25:
+            croissance = 2
+        else:
+            croissance = 1
+
+        if bilan_hydrique < -5:
+            croissance *= 0.3
+        elif bilan_hydrique < 0:
+            croissance *= 0.6
+        elif bilan_hydrique > 5:
+            croissance *= 1.2
+
+        croissance = round(max(croissance, 0), 2)
+        hauteur += croissance/10
+
+        if hauteur >= hauteur_limite:
             return row["date"]
-    return None  # aucune tonte prévue
+
+    return None
+
 
 def afficher_evolution_pelouse(journal, df, today):
     if not journal["tontes"]:
@@ -389,7 +430,7 @@ try:
 
     # 📈 Calcul de croissance de l’herbe depuis la dernière tonte
     df_tonte["croissance"] = df_tonte.apply(
-        lambda row: croissance_herbe(row["temp_max"], row["pluie"]), axis=1
+        lambda row: croissance_herbe(row["temp_max"], row["pluie"], row["evapo"]), axis=1
     )
     croissance_totale_mm = df_tonte["croissance"].sum()
 
@@ -522,7 +563,7 @@ try:
     # 📏 Hauteur actuelle
     st.markdown(f"""
     <p style='margin-top:10px;'>
-    📏 <b>Hauteur estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
+    📏 <b>Hauteur de gazon estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
     </p>
     """, unsafe_allow_html=True)
 
@@ -565,7 +606,7 @@ try:
 
     # 📅 Estimation de la prochaine tonte
     df_futur_tonte = df[df["date"] > today]
-    date_prochaine_tonte = estimer_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
+    date_prochaine_tonte = estimer_date_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
 
     if date_prochaine_tonte:
         st.markdown(f"""
