@@ -16,9 +16,18 @@ from babel.dates import format_date
 # === Chemins de base ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PARAM_PATH = os.path.join(BASE_DIR, "parametres_utilisateur.json")
+JOURNAL_PATH = os.path.join(BASE_DIR, "journal_jardin.json")
 
 # === Chargement / Sauvegarde des préférences utilisateur ===
 def charger_preferences_utilisateur():
+    """Charge les préférences utilisateur depuis un fichier JSON local.
+
+    Retourne un dictionnaire des préférences utilisateur si le fichier existe et est valide,
+    sinon un dictionnaire vide.
+
+    Returns:
+        dict: Préférences utilisateur.
+    """
     if os.path.exists(PARAM_PATH):
         try:
             with open(PARAM_PATH, "r", encoding="utf-8") as f:
@@ -30,17 +39,38 @@ def charger_preferences_utilisateur():
     return {}
 
 def enregistrer_preferences_utilisateur(prefs: dict):
-    with open(PARAM_PATH, "w", encoding="utf-8") as f:
-        json.dump(prefs, f, ensure_ascii=False, indent=2)
+    """Enregistre les préférences utilisateur dans un fichier JSON.
+
+    Args:
+        prefs (dict): Dictionnaire des préférences utilisateur à sauvegarder.
+    """
+    try:
+        with open(PARAM_PATH, "w", encoding="utf-8") as f:
+            json.dump(prefs, f, ensure_ascii=False, indent=2)
+    except IOError as e:
+        st.error(f"Erreur lors de la sauvegarde des préférences : {e}")
 
 # === Chargement des familles de plantes ===
 def charger_familles():
+    """Charge les données des familles de plantes depuis un fichier JSON.
+
+    Returns:
+        dict: Dictionnaire des familles de plantes.
+    """
     path = os.path.join(BASE_DIR, "familles_plantes.json")
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 # Construction d'un index plante → kc + famille
 def construire_index_plantes(familles):
+    """Construit un index des plantes associant chaque plante à sa famille et son coefficient kc.
+
+    Args:
+        familles (dict): Dictionnaire des familles de plantes.
+
+    Returns:
+        dict: Index plantes avec famille et kc.
+    """
     index = {}
     for famille, infos in familles.items():
         for plante in infos["plantes"]:
@@ -53,6 +83,14 @@ def construire_index_plantes(familles):
 # === Météo : géocodage d'une ville vers latitude/longitude ===
 @st.cache_data(ttl=3600)
 def get_coords_from_city(city_name):
+    """Récupère les coordonnées géographiques (latitude, longitude) d'une ville donnée.
+
+    Args:
+        city_name (str): Nom de la ville.
+
+    Returns:
+        dict or None: Dictionnaire avec les clés 'lat', 'lon', 'name', 'country' ou None si non trouvé.
+    """
     url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {"name": city_name, "count": 1, "language": "fr", "format": "json"}
     r = requests.get(url, params=params)
@@ -70,6 +108,17 @@ def get_coords_from_city(city_name):
 
 # === Calcul FAO ET₀ simplifié ===
 def calcul_evapotranspiration_fao(temp, rad, vent, altitude=150):
+    """Calcule l'évapotranspiration de référence (ET₀) selon la méthode FAO simplifiée.
+
+    Args:
+        temp (float): Température maximale quotidienne en °C.
+        rad (float): Radiation solaire (W/m²).
+        vent (float): Vitesse du vent en m/s.
+        altitude (int, optional): Altitude en mètres. Défaut à 150.
+
+    Returns:
+        float: ET₀ arrondi à deux décimales.
+    """
     albedo = 0.23
     G = 0  # Flux de chaleur au sol
     R_n = (1 - albedo) * rad
@@ -87,6 +136,15 @@ def calcul_evapotranspiration_fao(temp, rad, vent, altitude=150):
 # === Données météo quotidiennes ===
 @st.cache_data(ttl=3600)
 def recuperer_meteo(lat, lon):
+    """Récupère les données météo journalières pour une latitude et longitude données.
+
+    Args:
+        lat (float): Latitude.
+        lon (float): Longitude.
+
+    Returns:
+        pandas.DataFrame: Données météo quotidiennes avec colonnes 'date', 'temp_max', 'pluie', 'radiation', 'vent', 'evapo'.
+    """
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -127,6 +185,19 @@ def recuperer_meteo(lat, lon):
 
 # === Estimation de l’arrosage le plus contraignant ===
 def estimer_arrosage_le_plus_contraignant(df_futur, plantes_choisies, index_plantes, seuil_deficit, facteur_sol, facteur_paillage):
+    """Estime la date du prochain arrosage le plus urgent parmi les plantes sélectionnées.
+
+    Args:
+        df_futur (pandas.DataFrame): Données météo futures.
+        plantes_choisies (list): Liste des plantes sélectionnées.
+        index_plantes (dict): Index des plantes avec coefficients kc.
+        seuil_deficit (float): Seuil de déficit hydrique en mm.
+        facteur_sol (float): Facteur multiplicatif selon type de sol.
+        facteur_paillage (float): Facteur multiplicatif selon présence de paillage.
+
+    Returns:
+        datetime.date or None: Date estimée du prochain arrosage ou None si pas nécessaire.
+    """
     dates_arrosage = []
 
     for plante in plantes_choisies:
@@ -146,6 +217,16 @@ def estimer_arrosage_le_plus_contraignant(df_futur, plantes_choisies, index_plan
 
 # === Croissance de l’herbe (mm/jour) ===
 def croissance_herbe(temp_moy, pluie, et0):
+    """Estime la croissance quotidienne de l'herbe en fonction des conditions météo.
+
+    Args:
+        temp_moy (float): Température moyenne (°C).
+        pluie (float): Précipitations journalières (mm).
+        et0 (float): Évapotranspiration de référence (mm).
+
+    Returns:
+        float: Croissance estimée en mm/jour.
+    """
     bilan_hydrique = pluie - et0
 
     if temp_moy < 10:
@@ -171,6 +252,16 @@ def croissance_herbe(temp_moy, pluie, et0):
 
 # === Estimation de la prochaine tonte ===
 def estimer_date_prochaine_tonte(df_futur, hauteur_actuelle, taille_cible):
+    """Estime la date de la prochaine tonte basée sur la croissance du gazon.
+
+    Args:
+        df_futur (pandas.DataFrame): Données météo futures.
+        hauteur_actuelle (float): Hauteur actuelle du gazon en cm.
+        taille_cible (float): Hauteur cible de pelouse en cm.
+
+    Returns:
+        datetime.date or None: Date estimée de la prochaine tonte ou None si non estimée.
+    """
     hauteur_limite = 1.5 * taille_cible
     hauteur = hauteur_actuelle
 
@@ -208,6 +299,13 @@ def estimer_date_prochaine_tonte(df_futur, hauteur_actuelle, taille_cible):
 
 
 def afficher_evolution_pelouse(journal, df, today):
+    """Affiche un graphique de l'évolution estimée de la hauteur de la pelouse.
+
+    Args:
+        journal (dict): Journal des tontes et arrosages.
+        df (pandas.DataFrame): Données météo.
+        today (datetime.date): Date actuelle.
+    """
     if not journal["tontes"]:
         st.info("Aucune tonte enregistrée.")
         return
@@ -233,7 +331,7 @@ def afficher_evolution_pelouse(journal, df, today):
 
         row = df[df["date"] == date]
         if not row.empty:
-            croissance = croissance_herbe(row["temp_max"].values[0], row["pluie"].values[0]) / 10
+            croissance = croissance_herbe(row["temp_max"].values[0], row["pluie"].values[0], row["evapo"]) / 10
             hauteur += croissance
 
         historique.append({"date": date, "hauteur": hauteur})
@@ -259,6 +357,12 @@ def afficher_evolution_pelouse(journal, df, today):
     st.pyplot(fig)
 
 def afficher_calendrier_frise(journal, today):
+    """Affiche une frise de 14 jours avec les actions de jardin (arrosage, tonte).
+
+    Args:
+        journal (dict): Journal des actions réalisées.
+        today (datetime.date): Date actuelle.
+    """
     jours = [today - pd.Timedelta(days=i) for i in range(13, -1, -1)]
     dates_arrosage = set(pd.to_datetime(d).date() for d in journal.get("arrosages", []))
     dates_tonte = set(pd.to_datetime(t["date"]).date() for t in journal.get("tontes", []))
@@ -300,6 +404,83 @@ def afficher_calendrier_frise(journal, today):
     st.markdown("### 📅 Mon Jardin (14 jours en frise)")
     st.markdown("".join(lignes), unsafe_allow_html=True)
 
+# === Journal des actions (arrosage et tonte) ===
+def charger_journal():
+    if os.path.exists(JOURNAL_PATH):
+        try:
+            with open(JOURNAL_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # --- Process 'arrosages' list ---
+            if "arrosages" in data and isinstance(data["arrosages"], list):
+                processed_arrosages = []
+                for d_str in data["arrosages"]:
+                    try:
+                        processed_arrosages.append(pd.to_datetime(d_str))
+                    except (ValueError, TypeError):
+                        # Handle cases where a date string might be malformed
+                        st.warning(f"Impossible de convertir la date d'arrosage '{d_str}'. Ignorée.")
+                        continue
+                data["arrosages"] = processed_arrosages
+            else:
+                data["arrosages"] = [] # Ensure it's a list if missing or wrong type
+
+            # --- Process 'tontes' list ---
+            if "tontes" in data and isinstance(data["tontes"], list):
+                processed_tontes = []
+                for tonte_entry in data["tontes"]:
+                    if isinstance(tonte_entry, dict) and "date" in tonte_entry:
+                        date_val = tonte_entry["date"]
+                        try:
+                            # Handle the specific case where 'date' might be a list (backward compatibility)
+                            if isinstance(date_val, list):
+                                # Convert list of date strings to Timestamps, find max, then convert to single Timestamp
+                                tonte_dates_parsed = [pd.to_datetime(d) for d in date_val]
+                                tonte_entry["date"] = max(tonte_dates_parsed)
+                            elif isinstance(date_val, str):
+                                # Ensure single date string is converted to Timestamp
+                                tonte_entry["date"] = pd.to_datetime(date_val)
+                            # If it's already a Timestamp, leave it as is
+                            elif not isinstance(date_val, pd.Timestamp):
+                                raise ValueError("Date de tonte inattendue.") # Catch non-str/non-list types
+
+                            processed_tontes.append(tonte_entry)
+
+                        except (ValueError, TypeError) as e:
+                            st.warning(f"Impossible de convertir la date de tonte '{date_val}'. Entrée ignorée. Erreur: {e}")
+                            continue # Skip this malformed entry
+                    else:
+                        st.warning(f"Entrée de tonte mal formée : {tonte_entry}. Ignorée.")
+                data["tontes"] = processed_tontes
+            else:
+                data["tontes"] = [] # Ensure it's a list if missing or wrong type
+
+            return data
+        except json.JSONDecodeError as e:
+            st.error(f"Erreur de lecture du fichier journal_jardin.json. Le fichier est peut-être corrompu ou mal formaté. Erreur: {e}")
+            # Consider backing up or deleting the corrupt file if this happens often
+            return {"arrosages": [], "tontes": []}
+        except Exception as e:
+            st.error(f"Une erreur inattendue est survenue lors du chargement du journal : {e}")
+            return {"arrosages": [], "tontes": []}
+    return {"arrosages": [], "tontes": []}
+
+def sauvegarder_journal(data):
+    data_to_save = data.copy()
+
+    if "arrosages" in data_to_save and data_to_save["arrosages"]:
+        data_to_save["arrosages"] = [d.isoformat() for d in data_to_save["arrosages"]]
+
+    if "tontes" in data_to_save and data_to_save["tontes"]:
+        for tonte in data_to_save["tontes"]:
+            if isinstance(tonte.get("date"), pd.Timestamp):
+                tonte["date"] = tonte["date"].isoformat()
+
+    try:
+        with open(JOURNAL_PATH, "w", encoding="utf-8") as f:
+            json.dump(data_to_save, f, indent=2, ensure_ascii=False)
+    except IOError as e:
+        st.error(f"Erreur lors de la sauvegarde du journal : {e}")
 
 # === 🌿 CONFIGURATION GÉNÉRALE DE LA PAGE ===
 st.set_page_config(page_title="🌿 Arrosage potager", layout="centered")
@@ -315,31 +496,10 @@ try:
     type_sol_defaut = prefs.get("type_sol", "Limoneux")
 
     # 📚 Chargement des familles de plantes et index
-    familles = charger_familles()
-    plantes_index = construire_index_plantes(familles)
+    familles = charger_familles() # Make sure this function is defined
+    plantes_index = construire_index_plantes(familles) # Make sure this function is defined
 
-    # 📒 Journal des actions (arrosage et tonte)
-    JOURNAL_PATH = os.path.join(BASE_DIR, "journal_jardin.json")
-
-    def charger_journal():
-        if os.path.exists(JOURNAL_PATH):
-            with open(JOURNAL_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            # 🩹 Correction : transformer toutes les dates de tonte en string unique
-            for tonte in data.get("tontes", []):
-                if isinstance(tonte.get("date"), list):
-                    # Remplace la liste par la date la plus récente
-                    tonte["date"] = max(tonte["date"])
-            return data
-
-        return {"arrosages": [], "tontes": []}
-
-    def sauvegarder_journal(data):
-        with open(JOURNAL_PATH, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-    journal = charger_journal()
+    journal = charger_journal() # Make sure charger_journal is defined as updated previously
 
     # === 📆 SUIVI JOURNALIER ===
     with st.expander("📆 Suivi journalier", expanded=True):
@@ -347,30 +507,47 @@ try:
 
         with col1:
             if st.button("✅ J’ai arrosé aujourd’hui"):
-                journal["arrosages"].append(str(today.date()))
-                sauvegarder_journal(journal)
+                # Always append a pd.Timestamp
+                journal["arrosages"].append(today)
+                sauvegarder_journal(journal) # Make sure sauvegarder_journal is defined as updated previously
                 st.success("💧 Arrosage enregistré.")
 
         with col2:
             hauteur_tonte_input = st.slider("Hauteur après tonte (cm) :", 2, 10, 5)
             if st.button("✂️ J’ai tondu aujourd’hui"):
+                # Always store pd.Timestamp
                 journal["tontes"].append({
-                    "date": str(today.date()),
+                    "date": today,
                     "hauteur": hauteur_tonte_input
                 })
                 sauvegarder_journal(journal)
                 st.success(f"✂️ Tonte enregistrée à {hauteur_tonte_input} cm.")
 
-        # 🔁 Affichage dernier arrosage ou tonte
+        # Displaying dates from journal (they should now be pd.Timestamps)
+        # --- Start of correct display block ---
         if journal["arrosages"]:
-            st.markdown(f"**Dernier arrosage enregistré :** {journal['arrosages'][-1]}")
+            # Use .date() to get a datetime.date object for format_date
+            st.markdown(f"**Dernier arrosage enregistré :** {format_date(journal['arrosages'][-1].date(), format='full', locale='fr')}")
 
         if journal["tontes"]:
             derniere_tonte = max(journal["tontes"], key=lambda x: x["date"])
-            st.write(f"**Dernière date de tonte :** {derniere_tonte['date']}")
+            # Use .date() for display
+            st.write(f"**Dernière date de tonte :** {format_date(derniere_tonte['date'].date(), format='full', locale='fr')}")
             st.write(f"**Hauteur de coupe :** {derniere_tonte['hauteur']} cm")
         else:
             st.write("**Aucune tonte enregistrée.**")
+        # --- End of correct display block ---
+
+        # The following block is a duplicate and was causing inconsistent display.
+        # It's removed to ensure dates are always formatted correctly.
+        # if journal["arrosages"]:
+        #     st.markdown(f"**Dernier arrosage enregistré :** {journal['arrosages'][-1]}")
+        # if journal["tontes"]:
+        #     derniere_tonte = max(journal["tontes"], key=lambda x: x["date"])
+        #     st.write(f"**Dernière date de tonte :** {derniere_tonte['date']}")
+        #     st.write(f"**Hauteur de coupe :** {derniere_tonte['hauteur']} cm")
+        # else:
+        #     st.write("**Aucune tonte enregistrée.**")
 
     # === 🌱 SÉLECTION DU POTAGER ===
     with st.expander("🌱 Mon potager", expanded=False):
@@ -381,25 +558,25 @@ try:
             default=plantes_par_defaut
         )
         if st.button("🔁 Réinitialiser les paramètres"):
-            enregistrer_preferences_utilisateur({})
+            enregistrer_preferences_utilisateur({}) # Make sure this function is defined
             st.experimental_rerun()
 
     # === ⚙️ PARAMÈTRES DU JARDIN ===
     with st.expander("🛠️ Paramètres de votre jardin", expanded=False):
         ville = st.text_input("Ville ou commune :", "Beauzelle")
-        infos_ville = get_coords_from_city(ville)
+        infos_ville = get_coords_from_city(ville) # Make sure this function is defined
 
         if infos_ville:
             LAT = infos_ville["lat"]
             LON = infos_ville["lon"]
-            st.markdown(f"📍 Ville sélectionnée : **{infos_ville['name']}**, {infos_ville['country']}  \n"
+            st.markdown(f"📍 Ville sélectionnée : **{infos_ville['name']}**, {infos_ville['country']} \n"
                         f"🌐 Coordonnées : {LAT:.2f}, {LON:.2f}")
         else:
             st.error("❌ Ville non trouvée.")
             st.stop()
 
         type_sol = st.selectbox("Type de sol :", ["Limoneux", "Sableux", "Argileux"],
-                                index=["Limoneux", "Sableux", "Argileux"].index(type_sol_defaut))
+                                 index=["Limoneux", "Sableux", "Argileux"].index(type_sol_defaut))
         paillage = st.checkbox("Présence de paillage", value=paillage_defaut)
 
         # 💾 Enregistrement des préférences mises à jour
@@ -407,33 +584,35 @@ try:
         enregistrer_preferences_utilisateur(prefs)
 
     # === 📊 RÉCUPÉRATION MÉTÉO ===
-    df = recuperer_meteo(LAT, LON)
+    df = recuperer_meteo(LAT, LON) # Make sure this function is defined
     df["jour"] = df["date"].dt.strftime("%d/%m")
 
     # === ✂️ TONTE DE LA PELOUSE ===
     with st.expander("✂️ Tonte de la pelouse", expanded=False):
         if journal["tontes"]:
-            # On prend la dernière tonte
-            date_dernier_tonte = pd.to_datetime(journal["tontes"][-1]["date"])
+            # On prend la dernière tonte, which should already be a pd.Timestamp from charger_journal
+            date_dernier_tonte = max(journal["tontes"], key=lambda x: x["date"])["date"] # Ensure this is pd.Timestamp
             jours_depuis_tonte = (today - date_dernier_tonte).days
             st.markdown(f"✂️ Dernière tonte enregistrée : il y a **{jours_depuis_tonte} jour(s)**")
         else:
             jours_depuis_tonte = st.slider("Jours depuis la dernière tonte :", 1, 21, 7)
-            date_dernier_tonte = today - pd.Timedelta(days=jours_depuis_tonte)
+            date_dernier_tonte = today - pd.Timedelta(days=jours_depuis_tonte) # Ensure this is also a Timestamp
 
         hauteur_cible_cm = st.slider("Hauteur cible de pelouse (cm) :", 3, 8, 5)
+        # df_tonte should include dates up to 'today' (a Timestamp)
         df_tonte = df[(df["date"] >= date_dernier_tonte) & (df["date"] <= today)].copy()
 
         #st.markdown("### 📈 Suivi visuel de la hauteur de pelouse")
-        #afficher_evolution_pelouse(journal, df, today)
-
+        #afficher_evolution_pelouse(journal, df, today) # Make sure this function is defined
 
     # 📈 Calcul de croissance de l’herbe depuis la dernière tonte
+    # Make sure croissance_herbe is defined
     df_tonte["croissance"] = df_tonte.apply(
         lambda row: croissance_herbe(row["temp_max"], row["pluie"], row["evapo"]), axis=1
     )
     croissance_totale_mm = df_tonte["croissance"].sum()
 
+    # Ensure hauteur_initiale is correctly pulled from journal if available
     hauteur_initiale = journal["tontes"][-1]["hauteur"] if journal["tontes"] else hauteur_tonte_input
     hauteur_estimee_cm = hauteur_initiale + (croissance_totale_mm / 10)
 
@@ -445,11 +624,14 @@ try:
     # === 💧 CALCUL BESOINS EN ARROSAGE ===
     with st.expander("💧 Arrosage", expanded=False):
         if journal["arrosages"]:
-            date_dernier_arrosage = pd.to_datetime(journal["arrosages"][-1])
+            # journal["arrosages"][-1] is already a pd.Timestamp
+            date_dernier_arrosage = journal["arrosages"][-1]
             jours_depuis = (today - date_dernier_arrosage).days
             st.markdown(f"💧 Dernier arrosage : il y a **{jours_depuis} jour(s)**")
         else:
             jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
+            # Ensure this calculated date is also a Timestamp
+            date_dernier_arrosage = today - pd.Timedelta(days=jours_depuis)
 
         facteur_sol = {"Sableux": 1.3, "Limoneux": 1.0, "Argileux": 0.9}.get(type_sol, 1.0)
         facteur_paillage = 0.7 if paillage else 1.0
@@ -470,8 +652,9 @@ try:
         plantes_affichees = [p.capitalize() for p in plantes_famille if p in plantes_choisies]
         nom_affiche = ", ".join(plantes_affichees)
 
-        date_dernier_arrosage = pd.to_datetime(journal["arrosages"][-1]) if journal["arrosages"] else today - pd.Timedelta(days=7)
-        df_passe = df[(df["date"] > date_dernier_arrosage) & (df["date"] <= today)]
+        # date_dernier_arrosage will be a pd.Timestamp
+        date_dernier_arrosage_for_calc = journal["arrosages"][-1] if journal["arrosages"] else today - pd.Timedelta(days=7)
+        df_passe = df[(df["date"] > date_dernier_arrosage_for_calc) & (df["date"] <= today)]
 
         pluie_totale = df_passe["pluie"].sum()
         et0_total = df_passe["evapo"].sum()
@@ -500,7 +683,7 @@ try:
     st.markdown("### 🔍 Résumé du jour")
 
     # 🔍 Données météo du jour
-    meteo_auj = df[df["date"] == today]
+    meteo_auj = df[df["date"] == today] # 'today' is a pd.Timestamp here
     if not meteo_auj.empty:
         temp = meteo_auj["temp_max"].values[0]
         pluie = meteo_auj["pluie"].values[0]
@@ -515,11 +698,7 @@ try:
 
     # 🔥 Alerte chaleur
     if jours_chauds_a_venir >= 2:
-        st.markdown(f"""
-        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
-            🔥 <b>{jours_chauds_a_venir} jour(s) ≥30°C à venir</b>
-        </div>
-        """, unsafe_allow_html=True)
+        st.warning(f"🔥 **{jours_chauds_a_venir} jour(s) ≥30°C à venir**")
 
     # 🌧️ Pluie à venir
     if pluie_prochaine_48h >= 10:
@@ -576,10 +755,11 @@ try:
         st.markdown(f"<div style='background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
                     f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Recommandation']} – {ligne['Détail']}</div>",
                     unsafe_allow_html=True)
-    
+
     # === 📅 LES PREVISIONS ===
     st.markdown("### 📅 Prévisions du potager et météo")
     # 📅 Prochain arrosage estimé (le plus urgent)
+    # Ensure estimer_arrosage_le_plus_contraignant returns a pd.Timestamp
     date_prochain_arrosage = estimer_arrosage_le_plus_contraignant(
         df[df["date"] > today],
         plantes_choisies,
@@ -594,7 +774,7 @@ try:
         st.markdown(f"""
         <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
             💧 <b>Prochain arrosage estimé :</b> dans {nb_jours} jour(s)<br>
-            📆 <i>{format_date(date_prochain_arrosage, format='full', locale='fr')}</i>
+            📆 <i>{format_date(date_prochain_arrosage.date(), format='full', locale='fr')}</i>
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -606,13 +786,14 @@ try:
 
     # 📅 Estimation de la prochaine tonte
     df_futur_tonte = df[df["date"] > today]
+    # Ensure estimer_date_prochaine_tonte returns a pd.Timestamp
     date_prochaine_tonte = estimer_date_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
 
     if date_prochaine_tonte:
         st.markdown(f"""
         <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
             ✂️ <b>Prochaine tonte estimée :</b><br>
-            📆 <i>{format_date(date_prochaine_tonte, format='full', locale='fr')}</i>
+            📆 <i>{format_date(date_prochaine_tonte.date(), format='full', locale='fr')}</i>
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -622,10 +803,13 @@ try:
         </div>
         """, unsafe_allow_html=True)
 
-    
-    for _, row in df.iterrows():
-        jour = row["jour"]
-        is_today = (jour == today.strftime("%d/%m"))
+    # Displaying daily weather forecast
+    # Filtrer le DataFrame pour n'afficher que les 8 jours pertinents : aujourd'hui et les 7 prochains jours.
+    # Nous utilisons today + pd.Timedelta(days=7) pour inclure 7 jours complets après aujourd'hui.
+    df_a_afficher = df[(df["date"] >= today - pd.Timedelta(days=2)) & (df["date"] <= today + pd.Timedelta(days=7))]
+    for _, row in df_a_afficher.iterrows(): # <-- Changement ici
+        jour = format_date(row["date"].date(), format='dd/MM', locale='fr')
+        is_today = (row["date"].date() == today.date())
         card_style = (
             "background-color: #d0f0ff; font-weight: bold;" if is_today else "background-color: #f9f9f9;"
         )
@@ -637,14 +821,13 @@ try:
             <div>🌡️ {row['temp_max']}°C</div>
             <div>🌧️ {row['pluie']:.1f} mm</div>
             <div>💧 {row['evapo']:.1f}</div>
-            <div>☀️ {int(row['radiation']) if row['radiation'] else '-'} W/m²</div>
-            <div>🌬️ {int(row['vent']) if row['vent'] else '-'} km/h</div>
+            <div>☀️ {int(row['radiation']) if pd.notna(row['radiation']) else '-'} W/m²</div>
+            <div>🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h</div>
         </div>
         """, unsafe_allow_html=True)
 
     # === 📅 Historique ===
-    afficher_calendrier_frise(journal, today)
-
+    afficher_calendrier_frise(journal, today) # Make sure this function is defined and handles pd.Timestamps
 
 except Exception as e:
-    st.error(f"❌ Erreur : {e}")
+    st.error(f"❌ Erreur générale de l'application : {e}")
