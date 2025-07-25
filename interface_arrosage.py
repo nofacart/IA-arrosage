@@ -81,7 +81,7 @@ def construire_index_plantes(familles):
     return index
 
 # === Météo : géocodage d'une ville vers latitude/longitude ===
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def get_coords_from_city(city_name):
     """Récupère les coordonnées géographiques (latitude, longitude) d'une ville donnée.
 
@@ -134,7 +134,7 @@ def calcul_evapotranspiration_fao(temp, rad, vent, altitude=150):
     return round(max(ET0, 0), 2)
 
 # === Données météo quotidiennes ===
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def recuperer_meteo(lat, lon):
     """Récupère les données météo journalières pour une latitude et longitude données.
 
@@ -689,7 +689,7 @@ try:
         pluie = meteo_auj["pluie"].values[0]
 
         meteo_html = f"""
-        <div style='padding:10px; background-color:#f8f9fa; border-radius:6px; margin-bottom:10px;'>
+        <div style='padding:2px; background-color:#f8f9fa; border-radius:6px; margin-bottom:2px;'>
             <p>🌡️ <b>Température max :</b> {temp}°C</p>
             <p>🌧️ <b>Précipitations :</b> {pluie:.1f} mm</p>
         </div>
@@ -741,9 +741,9 @@ try:
 
     # 📏 Hauteur actuelle
     st.markdown(f"""
-    <p style='margin-top:10px;'>
-    📏 <b>Hauteur de gazon estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
-    </p>
+    <div style='padding:5px; background-color:#f8f9fa; border-radius:6px; margin-bottom:5px;'>
+        📏 <b>Hauteur de gazon estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
+    </div>
     """, unsafe_allow_html=True)
 
 

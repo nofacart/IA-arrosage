@@ -1,0 +1,1150 @@
+<!doctype html>
+<html class="no-js" lang="fr" data-content_root="../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Recherche" href="../search.html" />
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.07.19 -->
+        <title>interface_arrosage - Documentation IA-arrosage v1.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Documentation IA-arrosage v1.0</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <span class="sidebar-brand-text">Documentation IA-arrosage v1.0</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Recherche" name="q" aria-label="Recherche">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arrosage_app.html">Interface Arrosage</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Code source de interface_arrosage</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">streamlit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">st</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.dates</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mdates</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">locale</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">babel.dates</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_date</span>
+
+<span class="c1"># 🌍 Localisation en français pour les dates</span>
+<span class="c1">#locale.setlocale(locale.LC_TIME, &quot;fr_FR.UTF-8&quot;)</span>
+
+<span class="c1"># === Chemins de base ===</span>
+<span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">PARAM_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;parametres_utilisateur.json&quot;</span><span class="p">)</span>
+<span class="n">JOURNAL_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;journal_jardin.json&quot;</span><span class="p">)</span>
+
+<span class="c1"># === Chargement / Sauvegarde des préférences utilisateur ===</span>
+<div class="viewcode-block" id="charger_preferences_utilisateur">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.charger_preferences_utilisateur">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">charger_preferences_utilisateur</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Charge les préférences utilisateur depuis un fichier JSON local.</span>
+
+<span class="sd">    Retourne un dictionnaire des préférences utilisateur si le fichier existe et est valide,</span>
+<span class="sd">    sinon un dictionnaire vide.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Préférences utilisateur.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">PARAM_PATH</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">PARAM_PATH</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">data</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="enregistrer_preferences_utilisateur">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.enregistrer_preferences_utilisateur">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">enregistrer_preferences_utilisateur</span><span class="p">(</span><span class="n">prefs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enregistre les préférences utilisateur dans un fichier JSON.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        prefs (dict): Dictionnaire des préférences utilisateur à sauvegarder.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">PARAM_PATH</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">prefs</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Erreur lors de la sauvegarde des préférences : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1"># === Chargement des familles de plantes ===</span>
+<div class="viewcode-block" id="charger_familles">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.charger_familles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">charger_familles</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Charge les données des familles de plantes depuis un fichier JSON.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionnaire des familles de plantes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;familles_plantes.json&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></div>
+
+
+<span class="c1"># Construction d&#39;un index plante → kc + famille</span>
+<div class="viewcode-block" id="construire_index_plantes">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.construire_index_plantes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">construire_index_plantes</span><span class="p">(</span><span class="n">familles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construit un index des plantes associant chaque plante à sa famille et son coefficient kc.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        familles (dict): Dictionnaire des familles de plantes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Index plantes avec famille et kc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">famille</span><span class="p">,</span> <span class="n">infos</span> <span class="ow">in</span> <span class="n">familles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">plante</span> <span class="ow">in</span> <span class="n">infos</span><span class="p">[</span><span class="s2">&quot;plantes&quot;</span><span class="p">]:</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">plante</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;famille&quot;</span><span class="p">:</span> <span class="n">famille</span><span class="p">,</span>
+                <span class="s2">&quot;kc&quot;</span><span class="p">:</span> <span class="n">infos</span><span class="p">[</span><span class="s2">&quot;kc&quot;</span><span class="p">]</span>
+            <span class="p">}</span>
+    <span class="k">return</span> <span class="n">index</span></div>
+
+
+<span class="c1"># === Météo : géocodage d&#39;une ville vers latitude/longitude ===</span>
+<div class="viewcode-block" id="get_coords_from_city">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.get_coords_from_city">[docs]</a>
+<span class="nd">@st</span><span class="o">.</span><span class="n">cache_data</span><span class="p">(</span><span class="n">ttl</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_coords_from_city</span><span class="p">(</span><span class="n">city_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Récupère les coordonnées géographiques (latitude, longitude) d&#39;une ville donnée.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        city_name (str): Nom de la ville.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict or None: Dictionnaire avec les clés &#39;lat&#39;, &#39;lon&#39;, &#39;name&#39;, &#39;country&#39; ou None si non trouvé.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://geocoding-api.open-meteo.com/v1/search&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">city_name</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;fr&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">}</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="n">first</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="n">first</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">first</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="n">first</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># === Calcul FAO ET₀ simplifié ===</span>
+<div class="viewcode-block" id="calcul_evapotranspiration_fao">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.calcul_evapotranspiration_fao">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcul_evapotranspiration_fao</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">rad</span><span class="p">,</span> <span class="n">vent</span><span class="p">,</span> <span class="n">altitude</span><span class="o">=</span><span class="mi">150</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calcule l&#39;évapotranspiration de référence (ET₀) selon la méthode FAO simplifiée.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        temp (float): Température maximale quotidienne en °C.</span>
+<span class="sd">        rad (float): Radiation solaire (W/m²).</span>
+<span class="sd">        vent (float): Vitesse du vent en m/s.</span>
+<span class="sd">        altitude (int, optional): Altitude en mètres. Défaut à 150.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: ET₀ arrondi à deux décimales.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">albedo</span> <span class="o">=</span> <span class="mf">0.23</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Flux de chaleur au sol</span>
+    <span class="n">R_n</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">albedo</span><span class="p">)</span> <span class="o">*</span> <span class="n">rad</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="mi">4098</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.6108</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="mf">17.27</span> <span class="o">*</span> <span class="n">temp</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="mf">237.3</span><span class="p">)))</span> <span class="o">/</span> <span class="p">((</span><span class="n">temp</span> <span class="o">+</span> <span class="mf">237.3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="mf">101.3</span> <span class="o">*</span> <span class="p">((</span><span class="mi">293</span> <span class="o">-</span> <span class="mf">0.0065</span> <span class="o">*</span> <span class="n">altitude</span><span class="p">)</span> <span class="o">/</span> <span class="mi">293</span><span class="p">)</span><span class="o">**</span><span class="mf">5.26</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="mf">0.665e-3</span> <span class="o">*</span> <span class="n">P</span>
+    <span class="n">e_s</span> <span class="o">=</span> <span class="mf">0.6108</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="mf">17.27</span> <span class="o">*</span> <span class="n">temp</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="mf">237.3</span><span class="p">))</span>
+    <span class="n">e_a</span> <span class="o">=</span> <span class="n">e_s</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c1"># HR = 50% approx</span>
+    <span class="n">u2</span> <span class="o">=</span> <span class="n">vent</span>
+    <span class="n">ET0</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.408</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">R_n</span> <span class="o">-</span> <span class="n">G</span><span class="p">)</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="p">(</span><span class="mi">900</span> <span class="o">/</span> <span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="mi">273</span><span class="p">))</span> <span class="o">*</span> <span class="n">u2</span> <span class="o">*</span> <span class="p">(</span><span class="n">e_s</span> <span class="o">-</span> <span class="n">e_a</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span>
+        <span class="n">delta</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.34</span> <span class="o">*</span> <span class="n">u2</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ET0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<span class="c1"># === Données météo quotidiennes ===</span>
+<div class="viewcode-block" id="recuperer_meteo">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.recuperer_meteo">[docs]</a>
+<span class="nd">@st</span><span class="o">.</span><span class="n">cache_data</span><span class="p">(</span><span class="n">ttl</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">recuperer_meteo</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Récupère les données météo journalières pour une latitude et longitude données.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        lat (float): Latitude.</span>
+<span class="sd">        lon (float): Longitude.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pandas.DataFrame: Données météo quotidiennes avec colonnes &#39;date&#39;, &#39;temp_max&#39;, &#39;pluie&#39;, &#39;radiation&#39;, &#39;vent&#39;, &#39;evapo&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://api.open-meteo.com/v1/forecast&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="n">lat</span><span class="p">,</span>
+        <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="n">lon</span><span class="p">,</span>
+        <span class="s2">&quot;daily&quot;</span><span class="p">:</span> <span class="s2">&quot;temperature_2m_max,precipitation_sum,shortwave_radiation_sum,windspeed_10m_max,et0_fao_evapotranspiration&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;past_days&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;forecast_days&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;timezone&quot;</span><span class="p">:</span> <span class="s2">&quot;Europe/Paris&quot;</span>
+    <span class="p">}</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;daily&quot;</span><span class="p">]</span>
+
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;temperature_2m_max&quot;</span><span class="p">]</span>
+    <span class="n">pluie</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;precipitation_sum&quot;</span><span class="p">]</span>
+    <span class="n">rad</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shortwave_radiation_sum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">))</span>
+    <span class="n">vent_kmh</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;windspeed_10m_max&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">))</span>
+    <span class="n">evapo</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;et0_fao_evapotranspiration&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Calcul si ET₀ manquant</span>
+    <span class="k">if</span> <span class="n">evapo</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evapo</span><span class="p">):</span>
+        <span class="n">evapo_calc</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">r_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">rad</span><span class="p">,</span> <span class="n">vent_kmh</span><span class="p">):</span>
+            <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">r_</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                <span class="n">evapo_calc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">evapo_calc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calcul_evapotranspiration_fao</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">r_</span><span class="p">,</span> <span class="n">v</span> <span class="o">/</span> <span class="mf">3.6</span><span class="p">))</span>  <span class="c1"># km/h → m/s</span>
+        <span class="n">evapo</span> <span class="o">=</span> <span class="n">evapo_calc</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]),</span>
+        <span class="s2">&quot;temp_max&quot;</span><span class="p">:</span> <span class="n">temp</span><span class="p">,</span>
+        <span class="s2">&quot;pluie&quot;</span><span class="p">:</span> <span class="n">pluie</span><span class="p">,</span>
+        <span class="s2">&quot;radiation&quot;</span><span class="p">:</span> <span class="n">rad</span><span class="p">,</span>
+        <span class="s2">&quot;vent&quot;</span><span class="p">:</span> <span class="n">vent_kmh</span><span class="p">,</span>
+        <span class="s2">&quot;evapo&quot;</span><span class="p">:</span> <span class="n">evapo</span>
+    <span class="p">})</span></div>
+
+
+<span class="c1"># === Estimation de l’arrosage le plus contraignant ===</span>
+<div class="viewcode-block" id="estimer_arrosage_le_plus_contraignant">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.estimer_arrosage_le_plus_contraignant">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimer_arrosage_le_plus_contraignant</span><span class="p">(</span><span class="n">df_futur</span><span class="p">,</span> <span class="n">plantes_choisies</span><span class="p">,</span> <span class="n">index_plantes</span><span class="p">,</span> <span class="n">seuil_deficit</span><span class="p">,</span> <span class="n">facteur_sol</span><span class="p">,</span> <span class="n">facteur_paillage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estime la date du prochain arrosage le plus urgent parmi les plantes sélectionnées.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df_futur (pandas.DataFrame): Données météo futures.</span>
+<span class="sd">        plantes_choisies (list): Liste des plantes sélectionnées.</span>
+<span class="sd">        index_plantes (dict): Index des plantes avec coefficients kc.</span>
+<span class="sd">        seuil_deficit (float): Seuil de déficit hydrique en mm.</span>
+<span class="sd">        facteur_sol (float): Facteur multiplicatif selon type de sol.</span>
+<span class="sd">        facteur_paillage (float): Facteur multiplicatif selon présence de paillage.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        datetime.date or None: Date estimée du prochain arrosage ou None si pas nécessaire.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dates_arrosage</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">plante</span> <span class="ow">in</span> <span class="n">plantes_choisies</span><span class="p">:</span>
+        <span class="n">kc</span> <span class="o">=</span> <span class="n">index_plantes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">plante</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;kc&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">cumul_deficit</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_futur</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">etc</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;evapo&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">kc</span> <span class="o">*</span> <span class="n">facteur_sol</span> <span class="o">*</span> <span class="n">facteur_paillage</span>
+            <span class="n">bilan</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">etc</span>
+            <span class="k">if</span> <span class="n">bilan</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">cumul_deficit</span> <span class="o">+=</span> <span class="o">-</span><span class="n">bilan</span>
+            <span class="k">if</span> <span class="n">cumul_deficit</span> <span class="o">&gt;=</span> <span class="n">seuil_deficit</span><span class="p">:</span>
+                <span class="n">dates_arrosage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+                <span class="k">break</span>  <span class="c1"># seuil atteint</span>
+
+    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dates_arrosage</span><span class="p">)</span> <span class="k">if</span> <span class="n">dates_arrosage</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># === Croissance de l’herbe (mm/jour) ===</span>
+<div class="viewcode-block" id="croissance_herbe">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.croissance_herbe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">croissance_herbe</span><span class="p">(</span><span class="n">temp_moy</span><span class="p">,</span> <span class="n">pluie</span><span class="p">,</span> <span class="n">et0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estime la croissance quotidienne de l&#39;herbe en fonction des conditions météo.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        temp_moy (float): Température moyenne (°C).</span>
+<span class="sd">        pluie (float): Précipitations journalières (mm).</span>
+<span class="sd">        et0 (float): Évapotranspiration de référence (mm).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Croissance estimée en mm/jour.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bilan_hydrique</span> <span class="o">=</span> <span class="n">pluie</span> <span class="o">-</span> <span class="n">et0</span>
+
+    <span class="k">if</span> <span class="n">temp_moy</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="k">elif</span> <span class="mi">10</span> <span class="o">&lt;=</span> <span class="n">temp_moy</span> <span class="o">&lt;</span> <span class="mi">15</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">=</span> <span class="mf">1.5</span>
+    <span class="k">elif</span> <span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">temp_moy</span> <span class="o">&lt;</span> <span class="mi">25</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="k">elif</span> <span class="n">temp_moy</span> <span class="o">&gt;=</span> <span class="mi">25</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">bilan_hydrique</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">*=</span> <span class="mf">0.3</span>
+    <span class="k">elif</span> <span class="n">bilan_hydrique</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">*=</span> <span class="mf">0.6</span>
+    <span class="k">elif</span> <span class="n">bilan_hydrique</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">croissance</span> <span class="o">*=</span> <span class="mf">1.2</span>
+
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">croissance</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Estimation de la prochaine tonte ===</span>
+<div class="viewcode-block" id="estimer_date_prochaine_tonte">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.estimer_date_prochaine_tonte">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimer_date_prochaine_tonte</span><span class="p">(</span><span class="n">df_futur</span><span class="p">,</span> <span class="n">hauteur_actuelle</span><span class="p">,</span> <span class="n">taille_cible</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estime la date de la prochaine tonte basée sur la croissance du gazon.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df_futur (pandas.DataFrame): Données météo futures.</span>
+<span class="sd">        hauteur_actuelle (float): Hauteur actuelle du gazon en cm.</span>
+<span class="sd">        taille_cible (float): Hauteur cible de pelouse en cm.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        datetime.date or None: Date estimée de la prochaine tonte ou None si non estimée.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hauteur_limite</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">taille_cible</span>
+    <span class="n">hauteur</span> <span class="o">=</span> <span class="n">hauteur_actuelle</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_futur</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">temp_moy</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;temp_max&quot;</span><span class="p">]</span>
+        <span class="n">pluie</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span>
+        <span class="n">evapo</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;evapo&quot;</span><span class="p">]</span>  <span class="c1"># ou ET0, selon nom colonne</span>
+
+        <span class="n">bilan_hydrique</span> <span class="o">=</span> <span class="n">pluie</span> <span class="o">-</span> <span class="n">evapo</span>
+        <span class="k">if</span> <span class="n">temp_moy</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="k">elif</span> <span class="mi">10</span> <span class="o">&lt;=</span> <span class="n">temp_moy</span> <span class="o">&lt;</span> <span class="mi">15</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">=</span> <span class="mf">1.5</span>
+        <span class="k">elif</span> <span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">temp_moy</span> <span class="o">&lt;</span> <span class="mi">25</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="k">elif</span> <span class="n">temp_moy</span> <span class="o">&gt;=</span> <span class="mi">25</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">bilan_hydrique</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">*=</span> <span class="mf">0.3</span>
+        <span class="k">elif</span> <span class="n">bilan_hydrique</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">*=</span> <span class="mf">0.6</span>
+        <span class="k">elif</span> <span class="n">bilan_hydrique</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">*=</span> <span class="mf">1.2</span>
+
+        <span class="n">croissance</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">croissance</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">hauteur</span> <span class="o">+=</span> <span class="n">croissance</span><span class="o">/</span><span class="mi">10</span>
+
+        <span class="k">if</span> <span class="n">hauteur</span> <span class="o">&gt;=</span> <span class="n">hauteur_limite</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="afficher_evolution_pelouse">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.afficher_evolution_pelouse">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">afficher_evolution_pelouse</span><span class="p">(</span><span class="n">journal</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">today</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Affiche un graphique de l&#39;évolution estimée de la hauteur de la pelouse.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        journal (dict): Journal des tontes et arrosages.</span>
+<span class="sd">        df (pandas.DataFrame): Données météo.</span>
+<span class="sd">        today (datetime.date): Date actuelle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Aucune tonte enregistrée.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Cas où les dates sont des chaînes ou des listes</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parser_date_tonte</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+
+    <span class="n">dates_tontes</span> <span class="o">=</span> <span class="p">[</span><span class="n">parser_date_tonte</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]]</span>
+    <span class="n">hauteurs_tontes</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;hauteur&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]]</span>
+
+    <span class="n">hauteur</span> <span class="o">=</span> <span class="n">hauteurs_tontes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">historique</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">last_tonte_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">df_futur</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">dates_tontes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">df_futur</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">last_tonte_index</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">dates_tontes</span><span class="p">)</span> <span class="ow">and</span> <span class="n">date</span> <span class="o">&gt;=</span> <span class="n">dates_tontes</span><span class="p">[</span><span class="n">last_tonte_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="n">last_tonte_index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">hauteur</span> <span class="o">=</span> <span class="n">hauteurs_tontes</span><span class="p">[</span><span class="n">last_tonte_index</span><span class="p">]</span>
+
+        <span class="n">row</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">date</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">croissance</span> <span class="o">=</span> <span class="n">croissance_herbe</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;temp_max&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;evapo&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span>
+            <span class="n">hauteur</span> <span class="o">+=</span> <span class="n">croissance</span>
+
+        <span class="n">historique</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span> <span class="s2">&quot;hauteur&quot;</span><span class="p">:</span> <span class="n">hauteur</span><span class="p">})</span>
+
+    <span class="n">df_hauteur</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">historique</span><span class="p">)</span>
+
+    <span class="c1"># --- Affichage graphique ---</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">df_hauteur</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">],</span> <span class="n">df_hauteur</span><span class="p">[</span><span class="s2">&quot;hauteur&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Hauteur estimée&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">dates_tontes</span><span class="p">,</span> <span class="n">hauteurs_tontes</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Tonte&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">hauteurs_tontes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Seuil max conseillé&#39;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Hauteur (cm)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Date&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Évolution estimée de la hauteur de pelouse&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Axe X plus lisible</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mdates</span><span class="o">.</span><span class="n">DateFormatter</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">/%m&quot;</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+    <span class="n">st</span><span class="o">.</span><span class="n">pyplot</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="afficher_calendrier_frise">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.afficher_calendrier_frise">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">afficher_calendrier_frise</span><span class="p">(</span><span class="n">journal</span><span class="p">,</span> <span class="n">today</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Affiche une frise de 14 jours avec les actions de jardin (arrosage, tonte).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        journal (dict): Journal des actions réalisées.</span>
+<span class="sd">        today (datetime.date): Date actuelle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">jours</span> <span class="o">=</span> <span class="p">[</span><span class="n">today</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="n">dates_arrosage</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">journal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;arrosages&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="n">dates_tonte</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">journal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tontes&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+
+    <span class="n">lignes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">jour</span> <span class="ow">in</span> <span class="n">jours</span><span class="p">:</span>
+        <span class="n">jour_nom</span> <span class="o">=</span> <span class="n">jour</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%a</span><span class="s2"> </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span>
+        <span class="n">jour_date</span> <span class="o">=</span> <span class="n">jour</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">jour_date</span> <span class="ow">in</span> <span class="n">dates_arrosage</span><span class="p">:</span>
+            <span class="n">emoji</span> <span class="o">=</span> <span class="s2">&quot;✅&quot;</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;Arrosé&quot;</span>
+            <span class="n">couleur</span> <span class="o">=</span> <span class="s2">&quot;#D4EDDA&quot;</span>  <span class="c1"># Vert clair</span>
+        <span class="k">elif</span> <span class="n">jour_date</span> <span class="ow">in</span> <span class="n">dates_tonte</span><span class="p">:</span>
+            <span class="n">emoji</span> <span class="o">=</span> <span class="s2">&quot;✂️&quot;</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;Tondu&quot;</span>
+            <span class="n">couleur</span> <span class="o">=</span> <span class="s2">&quot;#D6EAF8&quot;</span>  <span class="c1"># Bleu clair</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">emoji</span> <span class="o">=</span> <span class="s2">&quot;—&quot;</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;Aucune action&quot;</span>
+            <span class="n">couleur</span> <span class="o">=</span> <span class="s2">&quot;#F0F0F0&quot;</span>  <span class="c1"># Gris clair</span>
+
+        <span class="n">lignes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            &lt;div style=&quot;</span>
+<span class="s2">                background-color: </span><span class="si">{</span><span class="n">couleur</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">                display: inline-block;</span>
+<span class="s2">                padding: 6px 10px;</span>
+<span class="s2">                margin: 4px;</span>
+<span class="s2">                border-radius: 6px;</span>
+<span class="s2">                font-family: Segoe UI, sans-serif;</span>
+<span class="s2">                font-size: 0.85em;</span>
+<span class="s2">                text-align: center;</span>
+<span class="s2">                min-width: 90px;</span>
+<span class="s2">            &quot;&gt;</span>
+<span class="s2">                📅 &lt;b&gt;</span><span class="si">{</span><span class="n">jour_nom</span><span class="si">}</span><span class="s2">&lt;/b&gt;&lt;br&gt;</span><span class="si">{</span><span class="n">emoji</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">action</span><span class="si">}</span>
+<span class="s2">            &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;### 📅 Mon Jardin (14 jours en frise)&quot;</span><span class="p">)</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lignes</span><span class="p">),</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<span class="c1"># === Journal des actions (arrosage et tonte) ===</span>
+<div class="viewcode-block" id="charger_journal">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.charger_journal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">charger_journal</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">JOURNAL_PATH</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">JOURNAL_PATH</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="c1"># --- Process &#39;arrosages&#39; list ---</span>
+            <span class="k">if</span> <span class="s2">&quot;arrosages&quot;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">processed_arrosages</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">d_str</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">processed_arrosages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">d_str</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                        <span class="c1"># Handle cases where a date string might be malformed</span>
+                        <span class="n">st</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Impossible de convertir la date d&#39;arrosage &#39;</span><span class="si">{</span><span class="n">d_str</span><span class="si">}</span><span class="s2">&#39;. Ignorée.&quot;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processed_arrosages</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Ensure it&#39;s a list if missing or wrong type</span>
+
+            <span class="c1"># --- Process &#39;tontes&#39; list ---</span>
+            <span class="k">if</span> <span class="s2">&quot;tontes&quot;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">processed_tontes</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">tonte_entry</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tonte_entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;date&quot;</span> <span class="ow">in</span> <span class="n">tonte_entry</span><span class="p">:</span>
+                        <span class="n">date_val</span> <span class="o">=</span> <span class="n">tonte_entry</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="c1"># Handle the specific case where &#39;date&#39; might be a list (backward compatibility)</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date_val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                                <span class="c1"># Convert list of date strings to Timestamps, find max, then convert to single Timestamp</span>
+                                <span class="n">tonte_dates_parsed</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">date_val</span><span class="p">]</span>
+                                <span class="n">tonte_entry</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tonte_dates_parsed</span><span class="p">)</span>
+                            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date_val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                                <span class="c1"># Ensure single date string is converted to Timestamp</span>
+                                <span class="n">tonte_entry</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">date_val</span><span class="p">)</span>
+                            <span class="c1"># If it&#39;s already a Timestamp, leave it as is</span>
+                            <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date_val</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">):</span>
+                                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Date de tonte inattendue.&quot;</span><span class="p">)</span> <span class="c1"># Catch non-str/non-list types</span>
+
+                            <span class="n">processed_tontes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tonte_entry</span><span class="p">)</span>
+
+                        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Impossible de convertir la date de tonte &#39;</span><span class="si">{</span><span class="n">date_val</span><span class="si">}</span><span class="s2">&#39;. Entrée ignorée. Erreur: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                            <span class="k">continue</span> <span class="c1"># Skip this malformed entry</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">st</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Entrée de tonte mal formée : </span><span class="si">{</span><span class="n">tonte_entry</span><span class="si">}</span><span class="s2">. Ignorée.&quot;</span><span class="p">)</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processed_tontes</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Ensure it&#39;s a list if missing or wrong type</span>
+
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Erreur de lecture du fichier journal_jardin.json. Le fichier est peut-être corrompu ou mal formaté. Erreur: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Consider backing up or deleting the corrupt file if this happens often</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;arrosages&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;tontes&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Une erreur inattendue est survenue lors du chargement du journal : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;arrosages&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;tontes&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;arrosages&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;tontes&quot;</span><span class="p">:</span> <span class="p">[]}</span></div>
+
+
+<div class="viewcode-block" id="sauvegarder_journal">
+<a class="viewcode-back" href="../arrosage_app.html#interface_arrosage.sauvegarder_journal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sauvegarder_journal</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">data_to_save</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="s2">&quot;arrosages&quot;</span> <span class="ow">in</span> <span class="n">data_to_save</span> <span class="ow">and</span> <span class="n">data_to_save</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]:</span>
+        <span class="n">data_to_save</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data_to_save</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;tontes&quot;</span> <span class="ow">in</span> <span class="n">data_to_save</span> <span class="ow">and</span> <span class="n">data_to_save</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">tonte</span> <span class="ow">in</span> <span class="n">data_to_save</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tonte</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;date&quot;</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">):</span>
+                <span class="n">tonte</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tonte</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">JOURNAL_PATH</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data_to_save</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Erreur lors de la sauvegarde du journal : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1"># === 🌿 CONFIGURATION GÉNÉRALE DE LA PAGE ===</span>
+<span class="n">st</span><span class="o">.</span><span class="n">set_page_config</span><span class="p">(</span><span class="n">page_title</span><span class="o">=</span><span class="s2">&quot;🌿 Arrosage potager&quot;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;centered&quot;</span><span class="p">)</span>
+<span class="n">st</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;🌿 Aide au jardinage&quot;</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">())</span>
+
+    <span class="c1"># 🔧 Chargement des préférences utilisateur (plantes, paillage, sol)</span>
+    <span class="n">prefs</span> <span class="o">=</span> <span class="n">charger_preferences_utilisateur</span><span class="p">()</span>
+    <span class="n">plantes_par_defaut</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plantes&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">paillage_defaut</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;paillage&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">type_sol_defaut</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type_sol&quot;</span><span class="p">,</span> <span class="s2">&quot;Limoneux&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 📚 Chargement des familles de plantes et index</span>
+    <span class="n">familles</span> <span class="o">=</span> <span class="n">charger_familles</span><span class="p">()</span> <span class="c1"># Make sure this function is defined</span>
+    <span class="n">plantes_index</span> <span class="o">=</span> <span class="n">construire_index_plantes</span><span class="p">(</span><span class="n">familles</span><span class="p">)</span> <span class="c1"># Make sure this function is defined</span>
+
+    <span class="n">journal</span> <span class="o">=</span> <span class="n">charger_journal</span><span class="p">()</span> <span class="c1"># Make sure charger_journal is defined as updated previously</span>
+
+    <span class="c1"># === 📆 SUIVI JOURNALIER ===</span>
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">expander</span><span class="p">(</span><span class="s2">&quot;📆 Suivi journalier&quot;</span><span class="p">,</span> <span class="n">expanded</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">col1</span><span class="p">,</span> <span class="n">col2</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">columns</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">col1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;✅ J’ai arrosé aujourd’hui&quot;</span><span class="p">):</span>
+                <span class="c1"># Always append a pd.Timestamp</span>
+                <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">today</span><span class="p">)</span>
+                <span class="n">sauvegarder_journal</span><span class="p">(</span><span class="n">journal</span><span class="p">)</span> <span class="c1"># Make sure sauvegarder_journal is defined as updated previously</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;💧 Arrosage enregistré.&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">col2</span><span class="p">:</span>
+            <span class="n">hauteur_tonte_input</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">slider</span><span class="p">(</span><span class="s2">&quot;Hauteur après tonte (cm) :&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;✂️ J’ai tondu aujourd’hui&quot;</span><span class="p">):</span>
+                <span class="c1"># Always store pd.Timestamp</span>
+                <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">today</span><span class="p">,</span>
+                    <span class="s2">&quot;hauteur&quot;</span><span class="p">:</span> <span class="n">hauteur_tonte_input</span>
+                <span class="p">})</span>
+                <span class="n">sauvegarder_journal</span><span class="p">(</span><span class="n">journal</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✂️ Tonte enregistrée à </span><span class="si">{</span><span class="n">hauteur_tonte_input</span><span class="si">}</span><span class="s2"> cm.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Displaying dates from journal (they should now be pd.Timestamps)</span>
+        <span class="c1"># --- Start of correct display block ---</span>
+        <span class="k">if</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]:</span>
+            <span class="c1"># Use .date() to get a datetime.date object for format_date</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Dernier arrosage enregistré :** </span><span class="si">{</span><span class="n">format_date</span><span class="p">(</span><span class="n">journal</span><span class="p">[</span><span class="s1">&#39;arrosages&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span><span class="w"> </span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">locale</span><span class="o">=</span><span class="s1">&#39;fr&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]:</span>
+            <span class="n">derniere_tonte</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+            <span class="c1"># Use .date() for display</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Dernière date de tonte :** </span><span class="si">{</span><span class="n">format_date</span><span class="p">(</span><span class="n">derniere_tonte</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span><span class="w"> </span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">locale</span><span class="o">=</span><span class="s1">&#39;fr&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Hauteur de coupe :** </span><span class="si">{</span><span class="n">derniere_tonte</span><span class="p">[</span><span class="s1">&#39;hauteur&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> cm&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;**Aucune tonte enregistrée.**&quot;</span><span class="p">)</span>
+        <span class="c1"># --- End of correct display block ---</span>
+
+        <span class="c1"># The following block is a duplicate and was causing inconsistent display.</span>
+        <span class="c1"># It&#39;s removed to ensure dates are always formatted correctly.</span>
+        <span class="c1"># if journal[&quot;arrosages&quot;]:</span>
+        <span class="c1">#     st.markdown(f&quot;**Dernier arrosage enregistré :** {journal[&#39;arrosages&#39;][-1]}&quot;)</span>
+        <span class="c1"># if journal[&quot;tontes&quot;]:</span>
+        <span class="c1">#     derniere_tonte = max(journal[&quot;tontes&quot;], key=lambda x: x[&quot;date&quot;])</span>
+        <span class="c1">#     st.write(f&quot;**Dernière date de tonte :** {derniere_tonte[&#39;date&#39;]}&quot;)</span>
+        <span class="c1">#     st.write(f&quot;**Hauteur de coupe :** {derniere_tonte[&#39;hauteur&#39;]} cm&quot;)</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     st.write(&quot;**Aucune tonte enregistrée.**&quot;)</span>
+
+    <span class="c1"># === 🌱 SÉLECTION DU POTAGER ===</span>
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">expander</span><span class="p">(</span><span class="s2">&quot;🌱 Mon potager&quot;</span><span class="p">,</span> <span class="n">expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">toutes_les_plantes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">plantes_index</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">plantes_choisies</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">multiselect</span><span class="p">(</span>
+            <span class="s2">&quot;Sélectionnez les plantes cultivées :&quot;</span><span class="p">,</span>
+            <span class="n">toutes_les_plantes</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">plantes_par_defaut</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;🔁 Réinitialiser les paramètres&quot;</span><span class="p">):</span>
+            <span class="n">enregistrer_preferences_utilisateur</span><span class="p">({})</span> <span class="c1"># Make sure this function is defined</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">experimental_rerun</span><span class="p">()</span>
+
+    <span class="c1"># === ⚙️ PARAMÈTRES DU JARDIN ===</span>
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">expander</span><span class="p">(</span><span class="s2">&quot;🛠️ Paramètres de votre jardin&quot;</span><span class="p">,</span> <span class="n">expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">ville</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">text_input</span><span class="p">(</span><span class="s2">&quot;Ville ou commune :&quot;</span><span class="p">,</span> <span class="s2">&quot;Beauzelle&quot;</span><span class="p">)</span>
+        <span class="n">infos_ville</span> <span class="o">=</span> <span class="n">get_coords_from_city</span><span class="p">(</span><span class="n">ville</span><span class="p">)</span> <span class="c1"># Make sure this function is defined</span>
+
+        <span class="k">if</span> <span class="n">infos_ville</span><span class="p">:</span>
+            <span class="n">LAT</span> <span class="o">=</span> <span class="n">infos_ville</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">]</span>
+            <span class="n">LON</span> <span class="o">=</span> <span class="n">infos_ville</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">]</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📍 Ville sélectionnée : **</span><span class="si">{</span><span class="n">infos_ville</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">**, </span><span class="si">{</span><span class="n">infos_ville</span><span class="p">[</span><span class="s1">&#39;country&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;🌐 Coordonnées : </span><span class="si">{</span><span class="n">LAT</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">LON</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;❌ Ville non trouvée.&quot;</span><span class="p">)</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">type_sol</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">selectbox</span><span class="p">(</span><span class="s2">&quot;Type de sol :&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;Limoneux&quot;</span><span class="p">,</span> <span class="s2">&quot;Sableux&quot;</span><span class="p">,</span> <span class="s2">&quot;Argileux&quot;</span><span class="p">],</span>
+                                 <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Limoneux&quot;</span><span class="p">,</span> <span class="s2">&quot;Sableux&quot;</span><span class="p">,</span> <span class="s2">&quot;Argileux&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">type_sol_defaut</span><span class="p">))</span>
+        <span class="n">paillage</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="s2">&quot;Présence de paillage&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">paillage_defaut</span><span class="p">)</span>
+
+        <span class="c1"># 💾 Enregistrement des préférences mises à jour</span>
+        <span class="n">prefs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;plantes&quot;</span><span class="p">:</span> <span class="n">plantes_choisies</span><span class="p">,</span> <span class="s2">&quot;paillage&quot;</span><span class="p">:</span> <span class="n">paillage</span><span class="p">,</span> <span class="s2">&quot;type_sol&quot;</span><span class="p">:</span> <span class="n">type_sol</span><span class="p">})</span>
+        <span class="n">enregistrer_preferences_utilisateur</span><span class="p">(</span><span class="n">prefs</span><span class="p">)</span>
+
+    <span class="c1"># === 📊 RÉCUPÉRATION MÉTÉO ===</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">recuperer_meteo</span><span class="p">(</span><span class="n">LAT</span><span class="p">,</span> <span class="n">LON</span><span class="p">)</span> <span class="c1"># Make sure this function is defined</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;jour&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">/%m&quot;</span><span class="p">)</span>
+
+    <span class="c1"># === ✂️ TONTE DE LA PELOUSE ===</span>
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">expander</span><span class="p">(</span><span class="s2">&quot;✂️ Tonte de la pelouse&quot;</span><span class="p">,</span> <span class="n">expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]:</span>
+            <span class="c1"># On prend la dernière tonte, which should already be a pd.Timestamp from charger_journal</span>
+            <span class="n">date_dernier_tonte</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="c1"># Ensure this is pd.Timestamp</span>
+            <span class="n">jours_depuis_tonte</span> <span class="o">=</span> <span class="p">(</span><span class="n">today</span> <span class="o">-</span> <span class="n">date_dernier_tonte</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✂️ Dernière tonte enregistrée : il y a **</span><span class="si">{</span><span class="n">jours_depuis_tonte</span><span class="si">}</span><span class="s2"> jour(s)**&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">jours_depuis_tonte</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">slider</span><span class="p">(</span><span class="s2">&quot;Jours depuis la dernière tonte :&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+            <span class="n">date_dernier_tonte</span> <span class="o">=</span> <span class="n">today</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">jours_depuis_tonte</span><span class="p">)</span> <span class="c1"># Ensure this is also a Timestamp</span>
+
+        <span class="n">hauteur_cible_cm</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">slider</span><span class="p">(</span><span class="s2">&quot;Hauteur cible de pelouse (cm) :&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="c1"># df_tonte should include dates up to &#39;today&#39; (a Timestamp)</span>
+        <span class="n">df_tonte</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">date_dernier_tonte</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">today</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1">#st.markdown(&quot;### 📈 Suivi visuel de la hauteur de pelouse&quot;)</span>
+        <span class="c1">#afficher_evolution_pelouse(journal, df, today) # Make sure this function is defined</span>
+
+    <span class="c1"># 📈 Calcul de croissance de l’herbe depuis la dernière tonte</span>
+    <span class="c1"># Make sure croissance_herbe is defined</span>
+    <span class="n">df_tonte</span><span class="p">[</span><span class="s2">&quot;croissance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_tonte</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">croissance_herbe</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;temp_max&quot;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;evapo&quot;</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">croissance_totale_mm</span> <span class="o">=</span> <span class="n">df_tonte</span><span class="p">[</span><span class="s2">&quot;croissance&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># Ensure hauteur_initiale is correctly pulled from journal if available</span>
+    <span class="n">hauteur_initiale</span> <span class="o">=</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;hauteur&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;tontes&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="n">hauteur_tonte_input</span>
+    <span class="n">hauteur_estimee_cm</span> <span class="o">=</span> <span class="n">hauteur_initiale</span> <span class="o">+</span> <span class="p">(</span><span class="n">croissance_totale_mm</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="c1"># 🔥 Alerte chaleur et pluie</span>
+    <span class="n">df_futur</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">today</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">today</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">3</span><span class="p">))]</span>
+    <span class="n">jours_chauds_a_venir</span> <span class="o">=</span> <span class="p">(</span><span class="n">df_futur</span><span class="p">[</span><span class="s2">&quot;temp_max&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">pluie_prochaine_48h</span> <span class="o">=</span> <span class="n">df_futur</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># === 💧 CALCUL BESOINS EN ARROSAGE ===</span>
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">expander</span><span class="p">(</span><span class="s2">&quot;💧 Arrosage&quot;</span><span class="p">,</span> <span class="n">expanded</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]:</span>
+            <span class="c1"># journal[&quot;arrosages&quot;][-1] is already a pd.Timestamp</span>
+            <span class="n">date_dernier_arrosage</span> <span class="o">=</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">jours_depuis</span> <span class="o">=</span> <span class="p">(</span><span class="n">today</span> <span class="o">-</span> <span class="n">date_dernier_arrosage</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;💧 Dernier arrosage : il y a **</span><span class="si">{</span><span class="n">jours_depuis</span><span class="si">}</span><span class="s2"> jour(s)**&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">jours_depuis</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">slider</span><span class="p">(</span><span class="s2">&quot;Jours depuis le dernier arrosage :&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="c1"># Ensure this calculated date is also a Timestamp</span>
+            <span class="n">date_dernier_arrosage</span> <span class="o">=</span> <span class="n">today</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">jours_depuis</span><span class="p">)</span>
+
+        <span class="n">facteur_sol</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Sableux&quot;</span><span class="p">:</span> <span class="mf">1.3</span><span class="p">,</span> <span class="s2">&quot;Limoneux&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;Argileux&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">type_sol</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">facteur_paillage</span> <span class="o">=</span> <span class="mf">0.7</span> <span class="k">if</span> <span class="n">paillage</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="n">SEUILS_DEFICIT_SOL</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Sableux&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;Limoneux&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;Argileux&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">}</span>
+        <span class="n">SEUIL_DEFICIT</span> <span class="o">=</span> <span class="n">SEUILS_DEFICIT_SOL</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">type_sol</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+        <span class="n">st</span><span class="o">.</span><span class="n">caption</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;💧 Seuil de déficit (</span><span class="si">{</span><span class="n">type_sol</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">) : </span><span class="si">{</span><span class="n">SEUIL_DEFICIT</span><span class="si">}</span><span class="s2"> mm&quot;</span><span class="p">)</span>
+
+    <span class="c1"># === 💡 CALCUL DES RECOMMANDATIONS PAR PLANTE ===</span>
+    <span class="n">table_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">code_famille</span><span class="p">,</span> <span class="n">infos_famille</span> <span class="ow">in</span> <span class="n">familles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">plantes_famille</span> <span class="o">=</span> <span class="n">infos_famille</span><span class="p">[</span><span class="s2">&quot;plantes&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span> <span class="ow">in</span> <span class="n">plantes_choisies</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plantes_famille</span><span class="p">):</span>
+            <span class="k">continue</span>  <span class="c1"># aucune plante de cette famille</span>
+
+        <span class="n">kc</span> <span class="o">=</span> <span class="n">infos_famille</span><span class="p">[</span><span class="s2">&quot;kc&quot;</span><span class="p">]</span>
+        <span class="n">plantes_affichees</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plantes_famille</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plantes_choisies</span><span class="p">]</span>
+        <span class="n">nom_affiche</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plantes_affichees</span><span class="p">)</span>
+
+        <span class="c1"># date_dernier_arrosage will be a pd.Timestamp</span>
+        <span class="n">date_dernier_arrosage_for_calc</span> <span class="o">=</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">journal</span><span class="p">[</span><span class="s2">&quot;arrosages&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="n">today</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+        <span class="n">df_passe</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">date_dernier_arrosage_for_calc</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">today</span><span class="p">)]</span>
+
+        <span class="n">pluie_totale</span> <span class="o">=</span> <span class="n">df_passe</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">et0_total</span> <span class="o">=</span> <span class="n">df_passe</span><span class="p">[</span><span class="s2">&quot;evapo&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">besoin_total</span> <span class="o">=</span> <span class="n">et0_total</span> <span class="o">*</span> <span class="n">kc</span> <span class="o">*</span> <span class="n">facteur_sol</span> <span class="o">*</span> <span class="n">facteur_paillage</span>
+        <span class="n">bilan</span> <span class="o">=</span> <span class="n">pluie_totale</span> <span class="o">-</span> <span class="n">besoin_total</span>
+        <span class="n">deficit</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="n">bilan</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">pluie_prochaine</span> <span class="o">=</span> <span class="n">df_futur</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">deficit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">besoin</span><span class="p">,</span> <span class="n">infos_bilan</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;✅ Excédent : </span><span class="si">{</span><span class="n">bilan</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm&quot;</span>
+        <span class="k">elif</span> <span class="n">deficit</span> <span class="o">&lt;=</span> <span class="n">SEUIL_DEFICIT</span><span class="p">:</span>
+            <span class="n">besoin</span><span class="p">,</span> <span class="n">infos_bilan</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;🤏 Déficit léger : </span><span class="si">{</span><span class="n">deficit</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm&quot;</span>
+        <span class="k">elif</span> <span class="n">pluie_prochaine</span> <span class="o">&gt;=</span> <span class="n">deficit</span><span class="p">:</span>
+            <span class="n">besoin</span><span class="p">,</span> <span class="n">infos_bilan</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;🌧️ Pluie prévue (</span><span class="si">{</span><span class="n">pluie_prochaine</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm) compensera&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">besoin</span><span class="p">,</span> <span class="n">infos_bilan</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;💧 Déficit : </span><span class="si">{</span><span class="n">deficit</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm&quot;</span>
+
+        <span class="n">table_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s2">&quot;Plante&quot;</span><span class="p">:</span> <span class="n">nom_affiche</span><span class="p">,</span>
+            <span class="s2">&quot;Recommandation&quot;</span><span class="p">:</span> <span class="s2">&quot;Arroser&quot;</span> <span class="k">if</span> <span class="n">besoin</span> <span class="k">else</span> <span class="s2">&quot;Pas besoin&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Couleur&quot;</span><span class="p">:</span> <span class="s2">&quot;🟧&quot;</span> <span class="k">if</span> <span class="n">besoin</span> <span class="k">else</span> <span class="s2">&quot;🟦&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Détail&quot;</span><span class="p">:</span> <span class="n">infos_bilan</span>
+        <span class="p">})</span>
+
+    <span class="c1"># === 🔍 SYNTHÈSE RAPIDE DU JOUR ===</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;### 🔍 Résumé du jour&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 🔍 Données météo du jour</span>
+    <span class="n">meteo_auj</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">today</span><span class="p">]</span> <span class="c1"># &#39;today&#39; is a pd.Timestamp here</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">meteo_auj</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">meteo_auj</span><span class="p">[</span><span class="s2">&quot;temp_max&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pluie</span> <span class="o">=</span> <span class="n">meteo_auj</span><span class="p">[</span><span class="s2">&quot;pluie&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">meteo_html</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;padding:2px; background-color:#f8f9fa; border-radius:6px; margin-bottom:2px;&#39;&gt;</span>
+<span class="s2">            &lt;p&gt;🌡️ &lt;b&gt;Température max :&lt;/b&gt; </span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s2">°C&lt;/p&gt;</span>
+<span class="s2">            &lt;p&gt;🌧️ &lt;b&gt;Précipitations :&lt;/b&gt; </span><span class="si">{</span><span class="n">pluie</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm&lt;/p&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="n">meteo_html</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># 🔥 Alerte chaleur</span>
+    <span class="k">if</span> <span class="n">jours_chauds_a_venir</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 **</span><span class="si">{</span><span class="n">jours_chauds_a_venir</span><span class="si">}</span><span class="s2"> jour(s) ≥30°C à venir**&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 🌧️ Pluie à venir</span>
+    <span class="k">if</span> <span class="n">pluie_prochaine_48h</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#d1ecf1; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            🌧️ &lt;b&gt;</span><span class="si">{</span><span class="n">pluie_prochaine_48h</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm de pluie dans les 48h&lt;/b&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># 💧 Arrosage</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;Recommandation&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Arroser&quot;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">):</span>
+        <span class="n">nb</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;Recommandation&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Arroser&quot;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">)</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#f8d7da; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            💧 &lt;b&gt;</span><span class="si">{</span><span class="n">nb</span><span class="si">}</span><span class="s2"> plante(s) à arroser aujourd’hui&lt;/b&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            ✅ &lt;b&gt;Aucune plante à arroser&lt;/b&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># ✂️ Tonte</span>
+    <span class="n">seuil_tonte_cm</span> <span class="o">=</span> <span class="n">hauteur_initiale</span> <span class="o">*</span> <span class="mf">1.5</span>
+
+    <span class="k">if</span> <span class="n">hauteur_estimee_cm</span> <span class="o">&gt;=</span> <span class="n">seuil_tonte_cm</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            ✂️ &lt;b&gt;Tonte recommandée :&lt;/b&gt; la hauteur dépasse le seuil conseillé</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            ✅ &lt;b&gt;Pas besoin de tondre actuellement&lt;/b&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># 📏 Hauteur actuelle</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    &lt;div style=&#39;padding:5px; background-color:#f8f9fa; border-radius:6px; margin-bottom:5px;&#39;&gt;</span>
+<span class="s2">        📏 &lt;b&gt;Hauteur de gazon estimée actuelle :&lt;/b&gt; </span><span class="si">{</span><span class="n">hauteur_estimee_cm</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> cm</span>
+<span class="s2">    &lt;/div&gt;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+    <span class="c1"># === 🌱 AFFICHAGE DES RECOMMANDATIONS PAR PLANTE ===</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;## 🌱 Recommandations détaillées&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ligne</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;#F8C17E&quot;</span> <span class="k">if</span> <span class="n">ligne</span><span class="p">[</span><span class="s2">&quot;Couleur&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;🟧&quot;</span> <span class="k">else</span> <span class="s2">&quot;#9EF89E&quot;</span>
+        <span class="n">emoji</span> <span class="o">=</span> <span class="s2">&quot;💧&quot;</span> <span class="k">if</span> <span class="n">ligne</span><span class="p">[</span><span class="s2">&quot;Recommandation&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Arroser&quot;</span> <span class="k">else</span> <span class="s2">&quot;✅&quot;</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;div style=&#39;background-color: </span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s2">; padding: 10px; border-radius: 5px; margin-bottom:5px;&#39;&gt;&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">emoji</span><span class="si">}</span><span class="s2"> &lt;b&gt;</span><span class="si">{</span><span class="n">ligne</span><span class="p">[</span><span class="s1">&#39;Plante&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;/b&gt; : </span><span class="si">{</span><span class="n">ligne</span><span class="p">[</span><span class="s1">&#39;Recommandation&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> – </span><span class="si">{</span><span class="n">ligne</span><span class="p">[</span><span class="s1">&#39;Détail&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;/div&gt;&quot;</span><span class="p">,</span>
+                    <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># === 📅 LES PREVISIONS ===</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;### 📅 Prévisions du potager et météo&quot;</span><span class="p">)</span>
+    <span class="c1"># 📅 Prochain arrosage estimé (le plus urgent)</span>
+    <span class="c1"># Ensure estimer_arrosage_le_plus_contraignant returns a pd.Timestamp</span>
+    <span class="n">date_prochain_arrosage</span> <span class="o">=</span> <span class="n">estimer_arrosage_le_plus_contraignant</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">today</span><span class="p">],</span>
+        <span class="n">plantes_choisies</span><span class="p">,</span>
+        <span class="n">plantes_index</span><span class="p">,</span>
+        <span class="n">SEUIL_DEFICIT</span><span class="p">,</span>
+        <span class="n">facteur_sol</span><span class="p">,</span>
+        <span class="n">facteur_paillage</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">date_prochain_arrosage</span><span class="p">:</span>
+        <span class="n">nb_jours</span> <span class="o">=</span> <span class="p">(</span><span class="n">date_prochain_arrosage</span> <span class="o">-</span> <span class="n">today</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            💧 &lt;b&gt;Prochain arrosage estimé :&lt;/b&gt; dans </span><span class="si">{</span><span class="n">nb_jours</span><span class="si">}</span><span class="s2"> jour(s)&lt;br&gt;</span>
+<span class="s2">            📆 &lt;i&gt;</span><span class="si">{</span><span class="n">format_date</span><span class="p">(</span><span class="n">date_prochain_arrosage</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span><span class="w"> </span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">locale</span><span class="o">=</span><span class="s1">&#39;fr&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/i&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            ✅ &lt;b&gt;Aucun arrosage estimé nécessaire dans les prochains jours&lt;/b&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># 📅 Estimation de la prochaine tonte</span>
+    <span class="n">df_futur_tonte</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">today</span><span class="p">]</span>
+    <span class="c1"># Ensure estimer_date_prochaine_tonte returns a pd.Timestamp</span>
+    <span class="n">date_prochaine_tonte</span> <span class="o">=</span> <span class="n">estimer_date_prochaine_tonte</span><span class="p">(</span><span class="n">df_futur_tonte</span><span class="p">,</span> <span class="n">hauteur_estimee_cm</span><span class="p">,</span> <span class="n">hauteur_cible_cm</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">date_prochaine_tonte</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            ✂️ &lt;b&gt;Prochaine tonte estimée :&lt;/b&gt;&lt;br&gt;</span>
+<span class="s2">            📆 &lt;i&gt;</span><span class="si">{</span><span class="n">format_date</span><span class="p">(</span><span class="n">date_prochaine_tonte</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span><span class="w"> </span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">locale</span><span class="o">=</span><span class="s1">&#39;fr&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/i&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&#39;background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;&#39;&gt;</span>
+<span class="s2">            🟢 &lt;b&gt;Aucune tonte prévue dans les prochains jours&lt;/b&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Displaying daily weather forecast</span>
+    <span class="c1"># Filtrer le DataFrame pour n&#39;afficher que les 8 jours pertinents : aujourd&#39;hui et les 7 prochains jours.</span>
+    <span class="c1"># Nous utilisons today + pd.Timedelta(days=7) pour inclure 7 jours complets après aujourd&#39;hui.</span>
+    <span class="n">df_a_afficher</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">today</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">today</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">))]</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_a_afficher</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span> <span class="c1"># &lt;-- Changement ici</span>
+        <span class="n">jour</span> <span class="o">=</span> <span class="n">format_date</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;dd/MM&#39;</span><span class="p">,</span> <span class="n">locale</span><span class="o">=</span><span class="s1">&#39;fr&#39;</span><span class="p">)</span>
+        <span class="n">is_today</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">==</span> <span class="n">today</span><span class="o">.</span><span class="n">date</span><span class="p">())</span>
+        <span class="n">card_style</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;background-color: #d0f0ff; font-weight: bold;&quot;</span> <span class="k">if</span> <span class="n">is_today</span> <span class="k">else</span> <span class="s2">&quot;background-color: #f9f9f9;&quot;</span>
+        <span class="p">)</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div style=&quot;</span><span class="si">{</span><span class="n">card_style</span><span class="si">}</span><span class="s2"> border-radius: 10px; padding: 8px 12px; margin-bottom: 6px;</span>
+<span class="s2">                    font-family: &#39;Segoe UI&#39;, Tahoma, Geneva, Verdana, sans-serif;</span>
+<span class="s2">                    font-size: 0.85em; display: flex; justify-content: space-between; flex-wrap: wrap;&quot;&gt;</span>
+<span class="s2">            &lt;div&gt;&lt;b&gt;📅 </span><span class="si">{</span><span class="n">jour</span><span class="si">}</span><span class="s2">&lt;/b&gt;&lt;/div&gt;</span>
+<span class="s2">            &lt;div&gt;🌡️ </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;temp_max&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">°C&lt;/div&gt;</span>
+<span class="s2">            &lt;div&gt;🌧️ </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;pluie&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm&lt;/div&gt;</span>
+<span class="s2">            &lt;div&gt;💧 </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;evapo&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&lt;/div&gt;</span>
+<span class="s2">            &lt;div&gt;☀️ </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;radiation&#39;</span><span class="p">])</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;radiation&#39;</span><span class="p">])</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;-&#39;</span><span class="si">}</span><span class="s2"> W/m²&lt;/div&gt;</span>
+<span class="s2">            &lt;div&gt;🌬️ </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;vent&#39;</span><span class="p">])</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;vent&#39;</span><span class="p">])</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;-&#39;</span><span class="si">}</span><span class="s2"> km/h&lt;/div&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">unsafe_allow_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># === 📅 Historique ===</span>
+    <span class="n">afficher_calendrier_frise</span><span class="p">(</span><span class="n">journal</span><span class="p">,</span> <span class="n">today</span><span class="p">)</span> <span class="c1"># Make sure this function is defined and handles pd.Timestamps</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Erreur générale de l&#39;application : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, Philippe CASTEL
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=69ec553c"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/translations.js?v=e6b791cb"></script>
+    </body>
+</html>
