@@ -611,6 +611,7 @@ try:
     today = pd.to_datetime(datetime.now().date())
     current_month = str(today.month) # Convertir le mois en chaîne pour correspondre aux clés JSON
 
+
     # 🔧 Chargement des recommandations mensuelles (utilisez la nouvelle fonction)
     recommendations_mensuelles = charger_recommandations_mensuelles()
 
@@ -631,51 +632,47 @@ try:
     nouveaux_deficits = {}
     plantes_choisies = plantes_par_defaut
     
-    # Définir la date de départ pour le calcul du delta météo
+        # Définir la date de départ pour le calcul du delta météo
     if etat_jardin["date_derniere_maj"] is None or etat_jardin["date_derniere_maj"] < today - pd.Timedelta(days=METEO_HISTORIQUE_DISPONIBLE):
         # Si pas d'état ou état trop vieux pour les données météo, on repart du dernier arrosage réel ou d'une date récente.
         date_depart_delta_meteo = journal["arrosages"][-1] if journal["arrosages"] else today - pd.Timedelta(days=7)
     else:
         date_depart_delta_meteo = etat_jardin["date_derniere_maj"]
     
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📆 Suivi journalier",
-        "💧 Synthèse de mon jardin",
-        "📊 Suivi Météo",
-        "Mon Jardin en chiffre",
-        "🌱 Mon Potager & Paramètres"
-    ])
+    
+    # === 📆 SUIVI JOURNALIER ===
+    with st.expander("📆 Suivi journalier", expanded=True):
+        col1, col2 = st.columns(2)
 
-    with tab1:
-        st.header("📆 Suivi journalier")
+        with col1:
+            if st.button("✅ J’ai arrosé aujourd’hui"):
+                    # Mettre à jour le journal
+                    journal["arrosages"].append(today)
+                    sauvegarder_journal(journal)
+                    
+                    # Mettre à jour les déficits pour les plantes choisies à zéro après l'arrosage
+                    for plante_id in plantes_choisies: # Assurez-vous que plantes_choisies utilise les mêmes clés que code_famille
 
-        if st.button("✅ J’ai arrosé aujourd’hui"):
-            # Mettre à jour le journal
-            journal["arrosages"].append(today)
-            sauvegarder_journal(journal)
-            
-            # Mettre à jour les déficits pour les plantes choisies à zéro après l'arrosage
-            for plante_id in plantes_choisies: # Assurez-vous que plantes_choisies utilise les mêmes clés que code_famille
+                        if plante_id in nouveaux_deficits:
+                            nouveaux_deficits[plante_id] = 0.0 # Déficit remis à zéro pour les plantes arrosées
 
-                if plante_id in nouveaux_deficits:
-                    nouveaux_deficits[plante_id] = 0.0 # Déficit remis à zéro pour les plantes arrosées
+                    etat_jardin["deficits_accumules"] = nouveaux_deficits
+                    sauvegarder_etat_jardin(etat_jardin) # Sauvegarder l'état mis à jour
 
-            etat_jardin["deficits_accumules"] = nouveaux_deficits
-            sauvegarder_etat_jardin(etat_jardin) # Sauvegarder l'état mis à jour
+                    st.success("💧 Arrosage enregistré ! Le déficit des plantes concernées a été mis à jour.")
+                    st.rerun() # Recharger l'app pour montrer les changements
 
-            st.success("💧 Arrosage enregistré ! Le déficit des plantes concernées a été mis à jour.")
-            st.rerun() # Recharger l'app pour montrer les changements
-
-        hauteur_tonte_input = st.slider("Hauteur après tonte (cm) :", 2, 10, 5)
-        if st.button("✂️ J’ai tondu aujourd’hui"):
-            # Always store pd.Timestamp
-            journal["tontes"].append({
-                "date": today,
-                "hauteur": hauteur_tonte_input
-            })
-            sauvegarder_journal(journal)
-            st.success(f"✂️ Tonte enregistrée à {hauteur_tonte_input} cm.")
-            st.rerun()
+        with col2:
+            hauteur_tonte_input = st.slider("Hauteur après tonte (cm) :", 2, 10, 5)
+            if st.button("✂️ J’ai tondu aujourd’hui"):
+                # Always store pd.Timestamp
+                journal["tontes"].append({
+                    "date": today,
+                    "hauteur": hauteur_tonte_input
+                })
+                sauvegarder_journal(journal)
+                st.success(f"✂️ Tonte enregistrée à {hauteur_tonte_input} cm.")
+                st.rerun()
 
         # Displaying dates from journal (they should now be pd.Timestamps)
         # --- Start of correct display block ---
@@ -689,6 +686,7 @@ try:
                 tonte for tonte in journal["tontes"]
                 if isinstance(tonte, dict) and "date" in tonte and isinstance(tonte["date"], pd.Timestamp)
             ]
+
             if valid_tontes: # S'il y a au moins une tonte valide
                 derniere_tonte = max(valid_tontes, key=lambda x: x["date"])
                 # Utilisez .date() for display (this will now be safe as derniere_tonte['date'] is pd.Timestamp)
@@ -702,8 +700,8 @@ try:
         else:
             st.write("**Aucune tonte enregistrée.**")
 
-    with tab5:
-        st.header("🌱 Mon Potager & Paramètres")
+    # === 🌱 SÉLECTION DU POTAGER ===
+    with st.expander("🌱 Mon potager", expanded=False):
         toutes_les_plantes = sorted(plantes_index.keys())
         plantes_choisies = st.multiselect(
             "Sélectionnez les plantes cultivées :",
@@ -714,6 +712,8 @@ try:
             enregistrer_preferences_utilisateur({}) # Make sure this function is defined
             st.experimental_rerun()
 
+    # === ⚙️ PARAMÈTRES DU JARDIN ===
+    with st.expander("🛠️ Paramètres de votre jardin", expanded=False):
         ville = st.text_input("Ville ou commune :", "Beauzelle")
         infos_ville = get_coords_from_city(ville) # Make sure this function is defined
 
@@ -726,10 +726,6 @@ try:
             st.error("❌ Ville non trouvée.")
             st.stop()
 
-        # === 📊 RÉCUPÉRATION MÉTÉO ===
-        df = recuperer_meteo(LAT, LON) # Make sure this function is defined
-        df["jour"] = df["date"].dt.strftime("%d/%m")
-
         type_sol = st.selectbox("Type de sol :", ["Limoneux", "Sableux", "Argileux"],
                                  index=["Limoneux", "Sableux", "Argileux"].index(type_sol_defaut))
         paillage = st.checkbox("Présence de paillage", value=paillage_defaut)
@@ -737,23 +733,14 @@ try:
         # 💾 Enregistrement des préférences mises à jour
         prefs.update({"plantes": plantes_choisies, "paillage": paillage, "type_sol": type_sol})
         enregistrer_preferences_utilisateur(prefs)
-        if journal["arrosages"]:
-            # journal["arrosages"][-1] is already a pd.Timestamp
-            date_dernier_arrosage = journal["arrosages"][-1]
-            jours_depuis = (today - date_dernier_arrosage).days
-            st.markdown(f"💧 Dernier arrosage : il y a **{jours_depuis} jour(s)**")
-        else:
-            jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
-            # Ensure this calculated date is also a Timestamp
-            date_dernier_arrosage = today - pd.Timedelta(days=jours_depuis)
 
-        facteur_sol = {"Sableux": 1.3, "Limoneux": 1.0, "Argileux": 0.9}.get(type_sol, 1.0)
-        facteur_paillage = 0.7 if paillage else 1.0
-        SEUILS_DEFICIT_SOL = {"Sableux": 10, "Limoneux": 20, "Argileux": 30}
-        SEUIL_DEFICIT = SEUILS_DEFICIT_SOL.get(type_sol, 20)
+    # === 📊 RÉCUPÉRATION MÉTÉO ===
+    df = recuperer_meteo(LAT, LON) # Make sure this function is defined
+    df["jour"] = df["date"].dt.strftime("%d/%m")
 
-        st.caption(f"💧 Seuil de déficit ({type_sol.lower()}) : {SEUIL_DEFICIT} mm")
 
+    # === ✂️ TONTE DE LA PELOUSE ===
+    with st.expander("✂️ Tonte de la pelouse", expanded=False):
         if journal["tontes"]:
             # On prend la dernière tonte, which should already be a pd.Timestamp from charger_journal
             date_dernier_tonte = max(journal["tontes"], key=lambda x: x["date"])["date"] # Ensure this is pd.Timestamp
@@ -767,6 +754,8 @@ try:
         # df_tonte should include dates up to 'today' (a Timestamp)
         df_tonte = df[(df["date"] >= date_dernier_tonte) & (df["date"] <= today)].copy()
 
+        #st.markdown("### 📈 Suivi visuel de la hauteur de pelouse")
+        #afficher_evolution_pelouse(journal, df, today) # Make sure this function is defined
 
     # 📈 Calcul de croissance de l’herbe depuis la dernière tonte
     # Make sure croissance_herbe is defined
@@ -784,8 +773,26 @@ try:
     jours_chauds_a_venir = (df_futur["temp_max"] >= 30).sum()
     pluie_prochaine_48h = df_futur.head(2)["pluie"].sum()
 
+    # === 💧 CALCUL BESOINS EN ARROSAGE ===
+    with st.expander("💧 Arrosage", expanded=False):
+        if journal["arrosages"]:
+            # journal["arrosages"][-1] is already a pd.Timestamp
+            date_dernier_arrosage = journal["arrosages"][-1]
+            jours_depuis = (today - date_dernier_arrosage).days
+            st.markdown(f"💧 Dernier arrosage : il y a **{jours_depuis} jour(s)**")
+        else:
+            jours_depuis = st.slider("Jours depuis le dernier arrosage :", 0, 14, 3)
+            # Ensure this calculated date is also a Timestamp
+            date_dernier_arrosage = today - pd.Timedelta(days=jours_depuis)
 
-    # Calcul des déficits pour le jour actuel, basé sur l'état précédent
+        facteur_sol = {"Sableux": 1.3, "Limoneux": 1.0, "Argileux": 0.9}.get(type_sol, 1.0)
+        facteur_paillage = 0.7 if paillage else 1.0
+        SEUILS_DEFICIT_SOL = {"Sableux": 10, "Limoneux": 20, "Argileux": 30}
+        SEUIL_DEFICIT = SEUILS_DEFICIT_SOL.get(type_sol, 20)
+
+        st.caption(f"💧 Seuil de déficit ({type_sol.lower()}) : {SEUIL_DEFICIT} mm")
+
+        # Calcul des déficits pour le jour actuel, basé sur l'état précédent
     for code_famille, infos_famille in familles.items():
         # Pour chaque famille de plante (qui a un KC unique)
         kc = infos_famille["kc"]
@@ -881,171 +888,182 @@ try:
              "Détail": infos_bilan
          })
 
-    with tab2 :
-        st.header("💧 Synthèse de mon jardin")
-        # 🔍 Données météo du jour
-        meteo_auj = df[df["date"] == today] # 'today' is a pd.Timestamp here
-        if not meteo_auj.empty:
-            temp = meteo_auj["temp_max"].values[0]
-            pluie = meteo_auj["pluie"].values[0]
+    # === 🔍 SYNTHÈSE RAPIDE DU JOUR ===
+    st.markdown("### 🔍 Résumé du jour")
 
-            meteo_html = f"""
-            <div style='padding:2px; background-color:#f8f9fa; border-radius:6px; margin-bottom:2px;'>
-                <p>🌡️ <b>Température max :</b> {temp}°C</p>
-                <p>🌧️ <b>Précipitations :</b> {pluie:.1f} mm
-            </div>
-            """
-            st.markdown(meteo_html, unsafe_allow_html=True)
+    # 🔍 Données météo du jour
+    meteo_auj = df[df["date"] == today] # 'today' is a pd.Timestamp here
+    if not meteo_auj.empty:
+        temp = meteo_auj["temp_max"].values[0]
+        pluie = meteo_auj["pluie"].values[0]
 
-        # 🔥 Alerte chaleur
-        if jours_chauds_a_venir >= 2:
-            st.warning(f"🔥 **{jours_chauds_a_venir} jour(s) ≥30°C à venir**")
+        meteo_html = f"""
+        <div style='padding:2px; background-color:#f8f9fa; border-radius:6px; margin-bottom:2px;'>
+            <p>🌡️ <b>Température max :</b> {temp}°C</p>
+            <p>🌧️ <b>Précipitations :</b> {pluie:.1f} mm
+        </div>
+        """
+        st.markdown(meteo_html, unsafe_allow_html=True)
 
-        # 🌧️ Pluie à venir
-        if pluie_prochaine_48h >= 10:
-            st.markdown(f"""
-            <div style='background-color:#d1ecf1; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                🌧️ <b>{pluie_prochaine_48h:.1f} mm de pluie dans les 48h</b>
-            </div>
-            """, unsafe_allow_html=True)
+    # 🔥 Alerte chaleur
+    if jours_chauds_a_venir >= 2:
+        st.warning(f"🔥 **{jours_chauds_a_venir} jour(s) ≥30°C à venir**")
 
-        # 💧 Arrosage
-        if any(p["Recommandation"] == "Arroser" for p in table_data):
-            nb = sum(p["Recommandation"] == "Arroser" for p in table_data)
-            st.markdown(f"""
-            <div style='background-color:#f8d7da; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                💧 <b>{nb} plante(s) à arroser aujourd’hui</b>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                ✅ <b>Aucune plante à arroser</b>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # ✂️ Tonte
-        seuil_tonte_cm = hauteur_initiale * 1.5
-
-        if hauteur_estimee_cm >= seuil_tonte_cm:
-            st.markdown("""
-            <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                ✂️ <b>Tonte recommandée :</b> la hauteur dépasse le seuil conseillé
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                ✅ <b>Pas besoin de tondre actuellement</b>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # 📏 Hauteur actuelle
+    # 🌧️ Pluie à venir
+    if pluie_prochaine_48h >= 10:
         st.markdown(f"""
-        <div style='padding:5px; background-color:#f8f9fa; border-radius:6px; margin-bottom:5px;'>
-            📏 <b>Hauteur de gazon estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
+        <div style='background-color:#d1ecf1; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            🌧️ <b>{pluie_prochaine_48h:.1f} mm de pluie dans les 48h</b>
         </div>
         """, unsafe_allow_html=True)
 
+    # 💧 Arrosage
+    if any(p["Recommandation"] == "Arroser" for p in table_data):
+        nb = sum(p["Recommandation"] == "Arroser" for p in table_data)
+        st.markdown(f"""
+        <div style='background-color:#f8d7da; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            💧 <b>{nb} plante(s) à arroser aujourd’hui</b>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✅ <b>Aucune plante à arroser</b>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # === 🌱 AFFICHAGE DES RECOMMANDATIONS PAR PLANTE ===
-        st.markdown("#### 🌱 Recommandations détaillées")
-        for ligne in table_data:
-            color = "#F8C17E" if ligne["Couleur"] == "🟧" else "#9EF89E"
-            emoji = "💧" if ligne["Recommandation"] == "Arroser" else "✅"
-            st.markdown(f"<div style='background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
-                        f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Recommandation']} – {ligne['Détail']}</div>",
-                        unsafe_allow_html=True)
+    # ✂️ Tonte
+    seuil_tonte_cm = hauteur_initiale * 1.5
 
-        # === 📅 LES PREVISIONS ===
-        st.markdown("#### 📅 Prévisions du potager et météo")
-        # 📅 Prochain arrosage estimé (le plus urgent)
-        # Ensure estimer_arrosage_le_plus_contraignant returns a pd.Timestamp
-        arrosage_necessaire_aujourdhui = any(p["Recommandation"] == "Arroser" for p in table_data)
+    if hauteur_estimee_cm >= seuil_tonte_cm:
+        st.markdown("""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✂️ <b>Tonte recommandée :</b> la hauteur dépasse le seuil conseillé
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✅ <b>Pas besoin de tondre actuellement</b>
+        </div>
+        """, unsafe_allow_html=True)
 
-        if arrosage_necessaire_aujourdhui:
-            date_prochain_arrosage = today # Si besoin aujourd'hui, la date estimée est aujourd'hui
+    # 📏 Hauteur actuelle
+    st.markdown(f"""
+    <div style='padding:5px; background-color:#f8f9fa; border-radius:6px; margin-bottom:5px;'>
+        📏 <b>Hauteur de gazon estimée actuelle :</b> {hauteur_estimee_cm:.1f} cm
+    </div>
+    """, unsafe_allow_html=True)
+
+
+    # === 🌱 AFFICHAGE DES RECOMMANDATIONS PAR PLANTE ===
+    st.markdown("## 🌱 Recommandations détaillées")
+    for ligne in table_data:
+        color = "#F8C17E" if ligne["Couleur"] == "🟧" else "#9EF89E"
+        emoji = "💧" if ligne["Recommandation"] == "Arroser" else "✅"
+        st.markdown(f"<div style='background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
+                    f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Recommandation']} – {ligne['Détail']}</div>",
+                    unsafe_allow_html=True)
+
+    # === 📅 LES PREVISIONS ===
+    st.markdown("### 📅 Prévisions du potager et météo")
+    # 📅 Prochain arrosage estimé (le plus urgent)
+    # Ensure estimer_arrosage_le_plus_contraignant returns a pd.Timestamp
+    arrosage_necessaire_aujourdhui = any(p["Recommandation"] == "Arroser" for p in table_data)
+
+    if arrosage_necessaire_aujourdhui:
+        date_prochain_arrosage = today # Si besoin aujourd'hui, la date estimée est aujourd'hui
+    else:
+        # Si pas besoin aujourd'hui, alors on estime le prochain besoin futur
+        date_prochain_arrosage = estimer_arrosage_le_plus_contraignant(
+            df[df["date"] > today], # On continue de chercher dans le futur seulement
+            plantes_choisies,
+            plantes_index,
+            SEUIL_DEFICIT,
+            facteur_sol,
+            facteur_paillage
+        )
+
+    if date_prochain_arrosage:
+        nb_jours = (date_prochain_arrosage - today).days
+        # Ajuster le texte si c'est aujourd'hui
+        if nb_jours == 0:
+            message_jours = "aujourd'hui"
+        elif nb_jours == 1:
+            message_jours = "demain"
         else:
-            # Si pas besoin aujourd'hui, alors on estime le prochain besoin futur
-            date_prochain_arrosage = estimer_arrosage_le_plus_contraignant(
-                df[df["date"] > today], # On continue de chercher dans le futur seulement
-                plantes_choisies,
-                plantes_index,
-                SEUIL_DEFICIT,
-                facteur_sol,
-                facteur_paillage
-            )
+            message_jours = f"dans {nb_jours} jour(s)"
 
-        if date_prochain_arrosage:
-            nb_jours = (date_prochain_arrosage - today).days
-            # Ajuster le texte si c'est aujourd'hui
-            if nb_jours == 0:
-                message_jours = "aujourd'hui"
-            elif nb_jours == 1:
-                message_jours = "demain"
-            else:
-                message_jours = f"dans {nb_jours} jour(s)"
+        st.markdown(f"""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            💧 <b>Prochain arrosage estimé :</b> {message_jours}<br>
+            📆 <i>{format_date(date_prochain_arrosage.date(), format='full', locale='fr')}</i>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✅ <b>Aucun arrosage estimé nécessaire dans les prochains jours</b>
+        </div>
+        """, unsafe_allow_html=True)
 
-            st.markdown(f"""
-            <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                💧 <b>Prochain arrosage estimé :</b> {message_jours}<br>
-                📆 <i>{format_date(date_prochain_arrosage.date(), format='full', locale='fr')}</i>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                ✅ <b>Aucun arrosage estimé nécessaire dans les prochains jours</b>
-            </div>
-            """, unsafe_allow_html=True)
+    # 📅 Estimation de la prochaine tonte
+    df_futur_tonte = df[df["date"] > today]
+    # Ensure estimer_date_prochaine_tonte returns a pd.Timestamp
+    date_prochaine_tonte = estimer_date_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
 
-        # 📅 Estimation de la prochaine tonte
-        df_futur_tonte = df[df["date"] > today]
-        # Ensure estimer_date_prochaine_tonte returns a pd.Timestamp
-        date_prochaine_tonte = estimer_date_prochaine_tonte(df_futur_tonte, hauteur_estimee_cm, hauteur_cible_cm)
+    if date_prochaine_tonte:
+        st.markdown(f"""
+        <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            ✂️ <b>Prochaine tonte estimée :</b><br>
+            📆 <i>{format_date(date_prochaine_tonte.date(), format='full', locale='fr')}</i>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
+            🟢 <b>Aucune tonte prévue dans les prochains jours</b>
+        </div>
+        """, unsafe_allow_html=True)
 
-        if date_prochaine_tonte:
-            st.markdown(f"""
-            <div style='background-color:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                ✂️ <b>Prochaine tonte estimée :</b><br>
-                📆 <i>{format_date(date_prochaine_tonte.date(), format='full', locale='fr')}</i>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style='background-color:#d4edda; padding:10px; border-radius:6px; margin-bottom:10px;'>
-                🟢 <b>Aucune tonte prévue dans les prochains jours</b>
-            </div>
-            """, unsafe_allow_html=True)
+    # Displaying daily weather forecast
+    # Filtrer le DataFrame pour n'afficher que les 8 jours pertinents : aujourd'hui et les 7 prochains jours.
+    # Nous utilisons today + pd.Timedelta(days=7) pour inclure 7 jours complets après aujourd'hui.
+    df_a_afficher = df[(df["date"] >= today - pd.Timedelta(days=2)) & (df["date"] <= today + pd.Timedelta(days=7))]
+    for _, row in df_a_afficher.iterrows(): # <-- Changement ici
+        jour = format_date(row["date"].date(), format='dd/MM', locale='fr')
+        is_today = (row["date"].date() == today.date())
+        card_style = (
+            "background-color: #d0f0ff; font-weight: bold;" if is_today else "background-color: #f9f9f9;"
+        )
+        st.markdown(f"""
+        <div style="{card_style} border-radius: 10px; padding: 8px 12px; margin-bottom: 6px;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    font-size: 0.85em; display: flex; justify-content: space-between; flex-wrap: wrap;">
+            <div><b>📅 {jour}</b></div>
+            <div>🌡️ {row['temp_max']}°C</div>
+            <div>🌧️ {row['pluie']:.1f} mm</div>
+            <div>🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with tab3 :
-        st.header("📊 Suivi Météo")
-        # Displaying daily weather forecast
-        # Filtrer le DataFrame pour n'afficher que les 8 jours pertinents : aujourd'hui et les 7 prochains jours.
-        # Nous utilisons today + pd.Timedelta(days=7) pour inclure 7 jours complets après aujourd'hui.
-        df_a_afficher = df[(df["date"] >= today - pd.Timedelta(days=2)) & (df["date"] <= today + pd.Timedelta(days=7))]
-        for _, row in df_a_afficher.iterrows(): # <-- Changement ici
-            jour = format_date(row["date"].date(), format='dd/MM', locale='fr')
-            is_today = (row["date"].date() == today.date())
-            card_style = (
-                "background-color: #d0f0ff; font-weight: bold;" if is_today else "background-color: #f9f9f9;"
-            )
-            st.markdown(f"""
-            <div style="{card_style} border-radius: 10px; padding: 8px 12px; margin-bottom: 6px;
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        font-size: 0.85em; display: flex; justify-content: space-between; flex-wrap: wrap;">
-                <div><b>📅 {jour}</b></div>
-                <div>🌡️ {row['temp_max']}°C</div>
-                <div>🌧️ {row['pluie']:.1f} mm</div>
-                <div>🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h</div>
-            </div>
-            """, unsafe_allow_html=True)
+    # === 📅 Historique ===
+    afficher_calendrier_frise(journal, today) # Make sure this function is defined and handles pd.Timestamps
 
-    with tab4 :
-        st.header("📊 Mon potager")
-        # === 📅 Historique ===
-        afficher_calendrier_frise(journal, today) # Make sure this function is defined and handles pd.Timestamps
+    # === 📝 Recommandations du mois ===
+    
+    st.markdown("### 📝 Recommandations du mois")
+    reco_mois = recommendations_mensuelles.get(int(current_month)) # Convertir en int pour l'accès si vous avez laissé les clés int après le load
 
+    if reco_mois:
+        st.markdown(f"#### {reco_mois['titre']}")
+        st.markdown("Voici quelques conseils pour votre jardin ce mois-ci :")
+        for conseil in reco_mois["conseils"]:
+            st.markdown(f"- {conseil}")
+    else:
+        st.info("Aucune recommandation spécifique disponible pour ce mois.")
+
+    with st.expander("📈 Statistiques du jardin", expanded=False): # Commençons par replié
         st.markdown("## Aperçu rapide de votre suivi")
 
         # Calcul des statistiques
@@ -1069,16 +1087,6 @@ try:
             if stats_tonte["derniere_tonte_date"]:
                 st.markdown(f"Dernière: {format_date(stats_tonte['derniere_tonte_date'], format='medium', locale='fr')}")
 
-        st.markdown("### 📝 Recommandations du mois")
-        reco_mois = recommendations_mensuelles.get(int(current_month)) # Convertir en int pour l'accès si vous avez laissé les clés int après le load
-
-        if reco_mois:
-            st.markdown(f"#### {reco_mois['titre']}")
-            st.markdown("Voici quelques conseils pour votre jardin ce mois-ci :")
-            for conseil in reco_mois["conseils"]:
-                st.markdown(f"- {conseil}")
-        else:
-            st.info("Aucune recommandation spécifique disponible pour ce mois.")
 
 except Exception as e:
     st.error(f"❌ Erreur générale de l'application : {e}")

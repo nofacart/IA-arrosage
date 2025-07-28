@@ -10,6 +10,6 @@
     "romarin"
   ],
   "sol": "Limoneux",
-  "paillage": true,
+  "paillage": false,
   "type_sol": "Limoneux"
 }

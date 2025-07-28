@@ -1,0 +1,99 @@
+{
+  "1": {
+    "titre": "Janvier : Repos et Préparation",
+    "conseils": [
+      "Préparez le sol en le décompactant.",
+      "Nettoyez et désinfectez vos outils de jardinage.",
+      "Commandez vos graines et planifiez vos cultures.",
+      "Protégez les plantes fragiles du gel."
+    ]
+  },
+  "2": {
+    "titre": "Février : Premières Semis et Taille",
+    "conseils": [
+      "Commencez les semis précoces (tomates, poivrons) sous abri.",
+      "Taillez les arbres fruitiers et arbustes à baies.",
+      "Amendez le sol avec du compost ou du fumier."
+    ]
+  },
+  "3": {
+    "titre": "Mars : Le Jardin s'Éveille",
+    "conseils": [
+      "Semez en pleine terre les légumes résistants (radis, carottes, pois).",
+      "Plantez les pommes de terre précoces.",
+      "Nettoyez les dernières feuilles mortes et préparez les parterres."
+    ]
+  },
+  "4": {
+    "titre": "Avril : Plantation et Protection",
+    "conseils": [
+      "Plantez les premières tomates et courgettes (protégez si risque de gel).",
+      "Semez les haricots et le maïs.",
+      "Surveillez les limaces et pucerons, mettez en place des protections."
+    ]
+  },
+  "5": {
+    "titre": "Mai : Abondance et Entretien",
+    "conseils": [
+      "Plantez la plupart des légumes d'été (aubergines, concombres, melons).",
+      "Paillez pour conserver l'humidité et limiter les mauvaises herbes.",
+      "Arrosez régulièrement, surtout les nouvelles plantations."
+    ]
+  },
+  "6": {
+    "titre": "Juin : Récoltes et Arrosage Intensif",
+    "conseils": [
+      "Récoltez les premiers légumes (salades, radis, petits pois).",
+      "Arrosez tôt le matin ou tard le soir pour maximiser l'efficacité.",
+      "Pincez les gourmands des tomates pour favoriser les fruits."
+    ]
+  },
+  "7": {
+    "titre": "Juillet : Chaleur et Récolte Continue",
+    "conseils": [
+      "Continuez les récoltes quotidiennes.",
+      "Assurez un arrosage suffisant face à la chaleur estivale.",
+      "Semez les légumes qui se récoltent en automne (salades, épinards)."
+    ]
+  },
+  "8": {
+    "titre": "Août : Préparez l'Automne",
+    "conseils": [
+      "Récoltez les légumes d'été en abondance.",
+      "Préparez de nouvelles parcelles pour les cultures d'automne.",
+      "Semez les engrais verts sur les zones libérées."
+    ]
+  },
+  "9": {
+    "titre": "Septembre : Rentrée au Jardin",
+    "conseils": [
+      "Plantez les cultures d'automne/hiver (choux, poireaux).",
+      "Semez les dernières salades.",
+      "Commencez à nettoyer le jardin et à préparer le compost."
+    ]
+  },
+  "10": {
+    "titre": "Octobre : Protection Hivernale",
+    "conseils": [
+      "Récoltez les légumes racines (carottes, navets).",
+      "Préparez le jardin pour l'hiver : protégez les plantes gélives.",
+      "Plantez les arbres et arbustes à feuilles caduques."
+    ]
+  },
+  "11": {
+    "titre": "Novembre : Derniers Travaux et Hivernage",
+    "conseils": [
+      "Nettoyez les massifs et les potagers.",
+      "Plantez les bulbes de printemps.",
+      "Rentrez les outils et videz les systèmes d'arrosage."
+    ]
+  },
+  "12": {
+    "titre": "Décembre : Repos et Planification",
+    "conseils": [
+      "Laissez le sol se reposer sous une couche de paillage ou d'engrais vert.",
+      "Consultez les catalogues de graines pour l'année prochaine.",
+      "Profitez du repos bien mérité !"
+    ]
+  }
+}
