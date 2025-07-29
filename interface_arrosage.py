@@ -665,9 +665,6 @@ try:
         col_arrosage, col_tonte = st.columns(2)
 
         with col_arrosage:
-            # --- AJOUT ICI : Espaceur pour aligner le bouton avec celui d'en face ---
-            # Le st.write("") crée une ligne vide, simulant l'espace pris par le libellé du slider
-            st.markdown("<p style='height: 82px;'></p>", unsafe_allow_html=True)
             if st.button("💧 J'ai arrosé aujourd'hui", use_container_width=True):
                 journal["arrosages"].append(today)
                 sauvegarder_journal(journal)
