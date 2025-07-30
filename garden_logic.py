@@ -12,66 +12,104 @@ import data_manager
 
 # --- Garden Logic Functions ---
 
-def calculer_deficits_accumules(journal_arrosages, familles, plantes_choisies, df_meteo, today, type_sol, paillage):
+def calculer_deficits_accumules(journal_arrosages, familles, plantes_choisies, df_meteo, today, type_sol, paillage,
+                                 deficits_precedents, date_derniere_maj_precedente):
     """
-    Calcule les déficits hydriques accumulés pour les plantes choisies.
+    Calcule les déficits hydriques accumulés pour les plantes choisies, en reprenant l'état précédent.
     Cette fonction est appelée chaque jour pour mettre à jour l'état du jardin.
+    
+    Args:
+        journal_arrosages (list): Liste des événements d'arrosage.
+        familles (dict): Dictionnaire des familles de plantes et leurs propriétés.
+        plantes_choisies (list): Liste des noms de plantes sélectionnées par l'utilisateur.
+        df_meteo (pd.DataFrame): DataFrame des données météorologiques (historique et prévisions).
+        today (pd.Timestamp): Date actuelle.
+        type_sol (str): Type de sol sélectionné.
+        paillage (bool): Indique si le paillage est présent.
+        deficits_precedents (dict): Déficits accumulés lors de la dernière mise à jour.
+        date_derniere_maj_precedente (pd.Timestamp): Date de la dernière mise à jour des déficits.
+        
+    Returns:
+        dict: Nouveaux déficits accumulés pour chaque famille de plantes.
     """
-    nouveaux_deficits = {}
-    # Use constants for factors
+    # Commencer avec les déficits de la veille pour les accumuler
+    nouveaux_deficits_accumules = deficits_precedents.copy()
+
     facteur_sol_val = constants.FACTEUR_SOL.get(type_sol, 1.0)
     facteur_paillage_val = constants.FACTEUR_PAILLAGE_REDUCTION if paillage else 1.0
 
-    # Determine the date of the last global watering to reset deficits
-    # This logic needs to be updated to handle the new journal_arrosages format (list of dicts)
-    # Filter for valid watering entries (dictionaries with a 'date' that is a Timestamp)
-    valid_arrosages = [
+    # Déterminer la date de début pour le calcul des nouveaux déficits
+    # C'est le jour après la dernière mise à jour de l'état du jardin
+    if date_derniere_maj_precedente is None:
+        # Si aucune mise à jour précédente, calculer depuis le début de l'historique météo disponible
+        start_date_for_new_calc = today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
+    else:
+        # Calculer à partir du jour suivant la dernière mise à jour
+        start_date_for_new_calc = date_derniere_maj_precedente + pd.Timedelta(days=1)
+
+    # Filtrer les événements d'arrosage qui ont eu lieu AUJOURD'HUI pour la logique de réinitialisation
+    valid_arrosages_today = [
         entry for entry in journal_arrosages
-        if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], (pd.Timestamp, datetime))
+        if isinstance(entry, dict) and "date" in entry and entry["date"].date() == today.date()
     ]
 
-    if valid_arrosages:
-        # Get the date of the latest watering event
-        date_dernier_arrosage_global = max(valid_arrosages, key=lambda x: x["date"])["date"]
-    else:
-        # If no watering is recorded, use an arbitrary date for historical weather data
-        date_dernier_arrosage_global = today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
-
     for code_famille, infos_famille in familles.items():
-        plantes_famille = infos_famille["plantes"]
-        # Only calculate for selected plants that belong to this family
-        if not any(p in plantes_choisies for p in plantes_famille):
-            continue
-
-        kc = infos_famille["kc"]
-
-        # Filter meteo data from last global watering to today
-        df_periode = df_meteo[(df_meteo["date"] > date_dernier_arrosage_global) & (df_meteo["date"] <= today)]
-
-        pluie_delta = df_periode["pluie"].sum()
-        et0_delta = df_periode["evapo"].sum()
-        besoin_delta = et0_delta * kc * facteur_sol_val * facteur_paillage_val
-
-        # The deficit is how much more water the plant needed than it received
-        # If pluie_delta > besoin_delta, there's a surplus, so deficit is 0
-        current_deficit = max(0.0, besoin_delta - pluie_delta)
-
-        # If there was an watering today for ANY of the plants in this family, reset deficit for this family
-        # This check needs to be updated to handle the new journal_arrosages format
-        arrosage_today_for_family = False
-        for entry in valid_arrosages:
-            if entry["date"].date() == today.date(): # Check if the watering event happened today
-                # Check if any plant in this family was part of today's watering event
-                if any(p in entry.get("plants", []) for p in plantes_famille):
-                    arrosage_today_for_family = True
-                    break
+        plantes_famille = [p.get("nom") for p in infos_famille.get("plantes", []) if isinstance(p, dict) and "nom" in p]
         
-        if arrosage_today_for_family:
-            current_deficit = 0.0
+        # Ne calculer que pour les familles dont au moins une plante est sélectionnée par l'utilisateur
+        if not any(p_nom in plantes_choisies for p_nom in plantes_famille):
+            # Si la famille n'est plus sélectionnée, la retirer des déficits accumulés si elle y est
+            if code_famille in nouveaux_deficits_accumules:
+                del nouveaux_deficits_accumules[code_famille]
+            continue # Passer à la famille suivante
 
-        nouveaux_deficits[code_famille] = current_deficit
+        kc = infos_famille.get("kc", 1.0)
 
-    return nouveaux_deficits
+        # Filtrer les données météo pour la période depuis la dernière mise à jour jusqu'à aujourd'hui
+        df_periode_new_calc = df_meteo[(df_meteo["date"] >= start_date_for_new_calc) & (df_meteo["date"] <= today)]
+
+        pluie_periode = df_periode_new_calc["pluie"].sum()
+        evapo_periode = df_periode_new_calc["evapo"].sum()
+        besoin_periode = evapo_periode * kc * facteur_sol_val * facteur_paillage_val
+
+        # Récupérer le déficit accumulé précédent pour cette famille, ou 0.0 si non existant
+        current_accumulated_deficit = nouveaux_deficits_accumules.get(code_famille, 0.0)
+        
+        # Calculer le changement de déficit pour cette période (besoin - pluie)
+        deficit_change = besoin_periode - pluie_periode
+        
+        # Ajouter ce changement au déficit accumulé
+        current_accumulated_deficit += deficit_change
+        
+        # S'assurer que le déficit ne devient pas négatif (un surplus ne s'accumule pas négativement)
+        current_accumulated_deficit = max(0.0, current_accumulated_deficit)
+
+        # Vérifier si un arrosage a eu lieu AUJOURD'HUI pour cette famille spécifique
+        arrosage_today_for_this_family = False
+        for entry in valid_arrosages_today:
+            # Vérifier si l'une des plantes arrosées aujourd'hui appartient à cette famille
+            if any(p in entry.get("plants", []) and p in plantes_famille for p in entry.get("plants", [])):
+                arrosage_today_for_this_family = True
+                break
+        
+        if arrosage_today_for_this_family:
+            current_accumulated_deficit = 0.0 # Réinitialiser le déficit pour cette famille si arrosée aujourd'hui
+
+        nouveaux_deficits_accumules[code_famille] = current_accumulated_deficit
+    
+    # S'assurer que seuls les déficits des plantes choisies sont conservés
+    final_deficits = {}
+    for plante_nom in plantes_choisies:
+        # Trouver la famille de la plante
+        famille_trouvee = None
+        for famille_code, infos_famille in familles.items():
+            if any(p.get("nom") == plante_nom for p in infos_famille.get("plantes", []) if isinstance(p, dict)):
+                famille_trouvee = famille_code
+                break
+        if famille_trouvee:
+            final_deficits[famille_trouvee] = nouveaux_deficits_accumules.get(famille_trouvee, 0.0)
+
+    return final_deficits
 
 def croissance_herbe(temp_max, pluie, evapo):
     """

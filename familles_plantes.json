@@ -1,46 +1,353 @@
 {
   "Tomates et apparentés": {
     "kc": 1.15,
-    "plantes": ["tomate"]
+    "plantes": [
+      {
+        "nom": "tomate",
+        "periode_semis": "Mars-Avril (intérieur), Mai (extérieur)",
+        "besoins_lumiere": "Plein soleil (6-8h/jour)",
+        "sensibilite_maladies": "Mildiou, Cul noir",
+        "associations_favorables": ["Basilic", "Carotte", "Oignon"],
+        "associations_defavorables": ["Pomme de terre", "Fenouil"]
+      }
+    ]
   },
   "Cucurbitacées moyennes": {
     "kc": 1.05,
-    "plantes": ["courgette", "melon", "concombre", "potimarron"]
+    "plantes": [
+      {
+        "nom": "courgette",
+        "periode_semis": "Avril (intérieur), Mai (extérieur)",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Oïdium, Mildiou",
+        "associations_favorables": ["Haricot", "Maïs"],
+        "associations_defavorables": ["Pomme de terre"]
+      },
+      {
+        "nom": "melon",
+        "periode_semis": "Mars-Avril (intérieur), Mai (extérieur)",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Oïdium, Pucerons",
+        "associations_favorables": ["Maïs", "Radis"],
+        "associations_defavorables": ["Concombre"]
+      },
+      {
+        "nom": "concombre",
+        "periode_semis": "Avril (intérieur), Mai (extérieur)",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Mildiou, Oïdium",
+        "associations_favorables": ["Haricot", "Maïs", "Aneth"],
+        "associations_defavorables": ["Melon", "Tomate"]
+      },
+      {
+        "nom": "potimarron",
+        "periode_semis": "Avril (intérieur), Mai (extérieur)",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Oïdium, Pucerons",
+        "associations_favorables": ["Maïs", "Haricot"],
+        "associations_defavorables": ["Pomme de terre"]
+      }
+    ]
   },
   "Légumineuses feuillues": {
     "kc": 1.00,
-    "plantes": ["haricot vert", "pois", "fève"]
+    "plantes": [
+      {
+        "nom": "haricot vert",
+        "periode_semis": "Mai-Juillet",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Anthracnose, Rouille",
+        "associations_favorables": ["Carotte", "Concombre", "Maïs"],
+        "associations_defavorables": ["Oignon", "Ail"]
+      },
+      {
+        "nom": "pois",
+        "periode_semis": "Mars-Avril",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Mildiou, Oïdium",
+        "associations_favorables": ["Carotte", "Navet", "Radis"],
+        "associations_defavorables": ["Ail", "Oignon"]
+      },
+      {
+        "nom": "fève",
+        "periode_semis": "Octobre-Novembre ou Février-Mars",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Rouille, Pucerons noirs",
+        "associations_favorables": ["Chou", "Épinard"],
+        "associations_defavorables": ["Oignon", "Ail"]
+      }
+    ]
   },
   "Solanacées modérées": {
     "kc": 1.00,
-    "plantes": ["aubergine", "poivron"]
+    "plantes": [
+      {
+        "nom": "aubergine",
+        "periode_semis": "Février-Avril (intérieur)",
+        "besoins_lumiere": "Plein soleil (8h+/jour)",
+        "sensibilite_maladies": "Mildiou, Verticilliose",
+        "associations_favorables": ["Haricot", "Poivron"],
+        "associations_defavorables": ["Pomme de terre"]
+      },
+      {
+        "nom": "poivron",
+        "periode_semis": "Février-Avril (intérieur)",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Mildiou, Pucerons",
+        "associations_favorables": ["Basilic", "Carotte"],
+        "associations_defavorables": ["Haricot"]
+      }
+    ]
   },
   "Salades et feuillues gourmandes": {
     "kc": 1.00,
-    "plantes": ["laitue", "épinard", "bette", "mâche"]
+    "plantes": [
+      {
+        "nom": "laitue",
+        "periode_semis": "Mars-Septembre",
+        "besoins_lumiere": "Mi-ombre à soleil",
+        "sensibilite_maladies": "Mildiou, Pucerons",
+        "associations_favorables": ["Carotte", "Radis", "Fraise"],
+        "associations_defavorables": ["Persil", "Céleri"]
+      },
+      {
+        "nom": "épinard",
+        "periode_semis": "Mars-Mai, Août-Octobre",
+        "besoins_lumiere": "Mi-ombre",
+        "sensibilite_maladies": "Mildiou, Pucerons",
+        "associations_favorables": ["Fève", "Haricot"],
+        "associations_defavorables": ["Tomate"]
+      },
+      {
+        "nom": "bette",
+        "periode_semis": "Avril-Juillet",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Mildiou, Pucerons",
+        "associations_favorables": ["Carotte", "Radis"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "mâche",
+        "periode_semis": "Août-Octobre",
+        "besoins_lumiere": "Mi-ombre",
+        "sensibilite_maladies": "Mildiou",
+        "associations_favorables": ["Carotte", "Poireau"],
+        "associations_defavorables": []
+      }
+    ]
   },
   "Racines moyennes": {
     "kc": 0.90,
-    "plantes": ["carotte", "radis", "betterave", "panais", "navet"]
+    "plantes": [
+      {
+        "nom": "carotte",
+        "periode_semis": "Mars-Juillet",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Mouche de la carotte",
+        "associations_favorables": ["Laitue", "Radis", "Romarin"],
+        "associations_defavorables": ["Aneth", "Fenouil"]
+      },
+      {
+        "nom": "radis",
+        "periode_semis": "Mars-Septembre",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Pucerons, Altises",
+        "associations_favorables": ["Laitue", "Carotte", "Épinard"],
+        "associations_defavorables": ["Cresson"]
+      },
+      {
+        "nom": "betterave",
+        "periode_semis": "Avril-Juin",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Cercosporiose",
+        "associations_favorables": ["Haricot", "Oignon"],
+        "associations_defavorables": ["Tomate"]
+      },
+      {
+        "nom": "panais",
+        "periode_semis": "Mars-Mai",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Rouille",
+        "associations_favorables": ["Haricot", "Oignon"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "navet",
+        "periode_semis": "Mars-Mai, Juillet-Août",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Altises, Hernie du chou",
+        "associations_favorables": ["Pois", "Haricot"],
+        "associations_defavorables": ["Chou"]
+      }
+    ]
   },
   "Aromatiques peu exigeantes": {
     "kc": 0.70,
-    "plantes": ["thym", "romarin", "sauge", "origan"]
+    "plantes": [
+      {
+        "nom": "thym",
+        "periode_semis": "Mars-Avril",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Pourriture racinaire (si excès d'eau)",
+        "associations_favorables": ["Chou", "Carotte"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "romarin",
+        "periode_semis": "Mars-Avril",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Maladies fongiques (si humidité excessive)",
+        "associations_favorables": ["Carotte", "Haricot"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "sauge",
+        "periode_semis": "Avril-Mai",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Oïdium",
+        "associations_favorables": ["Chou", "Carotte"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "origan",
+        "periode_semis": "Mars-Avril",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Rare",
+        "associations_favorables": ["Chou", "Tomate"],
+        "associations_defavorables": []
+      }
+    ]
   },
   "Aromatiques plus soiffardes": {
     "kc": 0.85,
-    "plantes": ["basilic", "menthe", "coriandre", "persil", "cerfeuil"]
+    "plantes": [
+      {
+        "nom": "basilic",
+        "periode_semis": "Avril-Juin (intérieur), Mai-Juillet (extérieur)",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Mildiou, Fusarium",
+        "associations_favorables": ["Tomate", "Poivron"],
+        "associations_defavorables": ["Rue"]
+      },
+      {
+        "nom": "menthe",
+        "periode_semis": "Mars-Mai",
+        "besoins_lumiere": "Mi-ombre",
+        "sensibilite_maladies": "Rouille",
+        "associations_favorables": ["Chou", "Tomate"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "coriandre",
+        "periode_semis": "Mars-Septembre",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Montée en graines rapide",
+        "associations_favorables": ["Aneth", "Pomme de terre"],
+        "associations_defavorables": []
+      },
+      {
+        "nom": "persil",
+        "periode_semis": "Mars-Septembre",
+        "besoins_lumiere": "Mi-ombre",
+        "sensibilite_maladies": "Septoriose",
+        "associations_favorables": ["Tomate", "Radis"],
+        "associations_defavorables": ["Laitue"]
+      },
+      {
+        "nom": "cerfeuil",
+        "periode_semis": "Mars-Septembre",
+        "besoins_lumiere": "Mi-ombre",
+        "sensibilite_maladies": "Montée en graines rapide",
+        "associations_favorables": ["Radis", "Laitue"],
+        "associations_defavorables": []
+      }
+    ]
   },
   "Choux et crucifères": {
     "kc": 0.95,
-    "plantes": ["chou", "brocoli", "chou-fleur", "chou-rave"]
+    "plantes": [
+      {
+        "nom": "chou",
+        "periode_semis": "Février-Juillet",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Hernie du chou, Pucerons",
+        "associations_favorables": ["Menthe", "Romarin", "Thym"],
+        "associations_defavorables": ["Fraise", "Oignon"]
+      },
+      {
+        "nom": "brocoli",
+        "periode_semis": "Mars-Juin",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Hernie du chou, Pucerons",
+        "associations_favorables": ["Pomme de terre", "Oignon"],
+        "associations_defavorables": ["Fraise"]
+      },
+      {
+        "nom": "chou-fleur",
+        "periode_semis": "Mars-Juin",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Hernie du chou, Pucerons",
+        "associations_favorables": ["Céleri", "Pomme de terre"],
+        "associations_defavorables": ["Fraise"]
+      },
+      {
+        "nom": "chou-rave",
+        "periode_semis": "Mars-Juillet",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Altises",
+        "associations_favorables": ["Laitue", "Pois"],
+        "associations_defavorables": []
+      }
+    ]
   },
   "Alliacées": {
     "kc": 0.85,
-    "plantes": ["oignon", "ail", "échalote", "poireau"]
+    "plantes": [
+      {
+        "nom": "oignon",
+        "periode_semis": "Février-Avril ou Septembre",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Mildiou, Rouille",
+        "associations_favorables": ["Carotte", "Laitue"],
+        "associations_defavorables": ["Haricot", "Chou"]
+      },
+      {
+        "nom": "ail",
+        "periode_semis": "Octobre-Novembre ou Février-Mars",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Rouille, Mildiou",
+        "associations_favorables": ["Carotte", "Tomate"],
+        "associations_defavorables": ["Haricot", "Pois"]
+      },
+      {
+        "nom": "échalote",
+        "periode_semis": "Février-Avril",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Mildiou",
+        "associations_favorables": ["Carotte", "Laitue"],
+        "associations_defavorables": ["Haricot"]
+      },
+      {
+        "nom": "poireau",
+        "periode_semis": "Février-Avril (intérieur), Avril-Mai (extérieur)",
+        "besoins_lumiere": "Plein soleil",
+        "sensibilite_maladies": "Mineuse du poireau, Rouille",
+        "associations_favorables": ["Carotte", "Céleri"],
+        "associations_defavorables": ["Haricot", "Pois"]
+      }
+    ]
   },
   "Fraises": {
     "kc": 1.05,
-    "plantes": ["fraise"]
+    "plantes": [
+      {
+        "nom": "fraise",
+        "periode_semis": "Août-Octobre (plantation)",
+        "besoins_lumiere": "Plein soleil à mi-ombre",
+        "sensibilite_maladies": "Mildiou, Botrytis",
+        "associations_favorables": ["Laitue", "Épinard"],
+        "associations_defavorables": ["Chou"]
+      }
+    ]
   }
 }

@@ -11,6 +11,7 @@ import constants
 def _load_json_file(filepath, default_data):
     """Helper to load JSON or return default data if file not found or corrupted."""
     if not os.path.exists(filepath):
+        st.warning(f"Le fichier {filepath} n'existe pas. Retourne les données par défaut.")
         return default_data
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -178,17 +179,19 @@ def charger_familles():
     """Charge les données des familles de plantes depuis un fichier JSON (familles_plantes.json)."""
     return _load_json_file(constants.FAMILLES_PLANTES_FILE, {})
 
-# Construction d'un index plante → kc + famille
+# Construction d'un index plante → infos complètes
 def construire_index_plantes(familles):
-    """Construit un index des plantes associant chaque plante à sa famille et son coefficient kc."""
+    """Construit un index des plantes associant chaque plante à son nom (string) et toutes ses informations détaillées."""
     index = {}
-    for famille, infos in familles.items():
-        if "plantes" in infos and isinstance(infos["plantes"], list):
-            for plante in infos["plantes"]:
-                index[plante] = {
-                    "famille": famille,
-                    "kc": infos.get("kc", 1.0) # Default kc if not specified
-                }
+    for famille_code, infos_famille in familles.items():
+        if "plantes" in infos_famille and isinstance(infos_famille["plantes"], list):
+            for plante_dict in infos_famille["plantes"]: # 'plante_dict' est le dictionnaire complet de la plante
+                if isinstance(plante_dict, dict) and "nom" in plante_dict:
+                    plante_nom = plante_dict["nom"]
+                    # Stocker le dictionnaire complet de la plante, et ajouter la famille pour référence
+                    full_plant_info = plante_dict.copy()
+                    full_plant_info["famille"] = famille_code
+                    index[plante_nom] = full_plant_info
     return index
 
 @st.cache_data(ttl=86400) # Cache for 24 hours

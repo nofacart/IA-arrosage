@@ -1,13 +1,12 @@
 {
   "plantes": [
-    "courgette",
     "melon",
-    "fraise",
-    "haricot vert",
-    "thym",
     "tomate",
-    "origan",
-    "romarin"
+    "courgette",
+    "haricot vert",
+    "fraise",
+    "romarin",
+    "origan"
   ],
   "sol": "Limoneux",
   "paillage": false,

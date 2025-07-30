@@ -5,6 +5,7 @@ import locale
 from babel.dates import format_date
 import matplotlib.pyplot as plt # Pour afficher_evolution_pelouse
 import matplotlib.dates as mdates # Pour formater les dates sur les graphiques
+import re
 
 import constants # Pour les constantes par défaut si besoin
 
@@ -162,3 +163,36 @@ def calculer_stats_tonte(journal):
         "derniere_tonte_date": tontes_sorted[-1]["date"].date()
     }
 
+def get_months_from_period_string(period_str):
+    """
+    Parses a period string (e.g., "Mars-Avril (intérieur), Mai (extérieur)")
+    and returns a sorted list of month numbers (1-12) implied.
+    """
+    months_map = {
+        "janvier": 1, "février": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6,
+        "juillet": 7, "août": 8, "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12
+    }
+    
+    found_months = set()
+    period_str_lower = period_str.lower()
+
+    # Look for single month names
+    for month_name, month_num in months_map.items():
+        if re.search(r'\b' + re.escape(month_name) + r'\b', period_str_lower):
+            found_months.add(month_num)
+    
+    # Look for ranges like "Mars-Avril" or "mars-avril"
+    for m1_name, m1_num in months_map.items():
+        for m2_name, m2_num in months_map.items():
+            if f"{m1_name}-{m2_name}" in period_str_lower:
+                # Handle wrap-around for year end (e.g., Nov-Jan)
+                if m1_num <= m2_num:
+                    for m in range(m1_num, m2_num + 1):
+                        found_months.add(m)
+                else: # Crosses year boundary
+                    for m in range(m1_num, 13):
+                        found_months.add(m)
+                    for m in range(1, m2_num + 1):
+                        found_months.add(m)
+    
+    return sorted(list(found_months))

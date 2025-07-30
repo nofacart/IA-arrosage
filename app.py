@@ -42,8 +42,10 @@ try:
     # 📖 Chargement du journal des actions (arrosage et tonte)
     journal = data_manager.charger_journal()
 
+
     # 💧 Chargement de l'état du jardin (déficits hydriques)
     etat_jardin = data_manager.charger_etat_jardin()
+
 
     # Définir la date de départ pour le calcul du delta météo
     # La logique doit maintenant gérer le nouveau format de journal["arrosages"] (liste de dictionnaires)
@@ -52,6 +54,7 @@ try:
         entry for entry in journal["arrosages"]
         if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], pd.Timestamp)
     ]
+
 
     if valid_arrosages_for_delta:
         # Trouver la date du dernier arrosage à partir du nouveau format de dictionnaire
@@ -70,12 +73,13 @@ try:
     hauteur_tonte_input_default = data_manager.get_hauteur_tonte_default(journal["tontes"])
 
     # Tabs for navigation
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📆 Suivi journalier",
         "💧 Synthèse de mon jardin",
         "📈 Suivi Météo",
         "📊 Mon Jardin en chiffre",
-        "🌱 Mon Potager & Paramètres"
+        "🌱 Mon Potager & Paramètres",
+        "📚 Fiches Plantes"
     ])
 
     with tab1:
@@ -169,10 +173,17 @@ try:
 
         # Sélection des plantes cultivées
         toutes_les_plantes = sorted(plantes_index.keys())
+        
+        # Filter plantes_par_defaut to ensure all default values exist in options
+        # This prevents the "default value not in options" error
+        filtered_plantes_par_defaut = [
+            p for p in plantes_par_defaut if p in toutes_les_plantes
+        ]
+
         plantes_choisies = st.multiselect(
             "Sélectionnez les **plantes cultivées** :",
             toutes_les_plantes,
-            default=plantes_par_defaut,
+            default=filtered_plantes_par_defaut, # Use the filtered list as default
             key="plantes_selection_tab5"
         )
         # Mettre à jour plantes_par_defaut pour les calculs globaux si modifié dans l'UI
@@ -215,11 +226,12 @@ try:
             st.info(f"📍 Ville sélectionnée : **{infos_ville['name']}**, {infos_ville['country']} \n"
                                      f"🌐 Coordonnées : `{LAT:.2f}, {LON:.2f}`")
         else:
-            st.error("❌ Ville non trouvée. Veuillez vérifier l'orthographe ou en choisir une autre.")
+            st.error("❌ Ville non trouvée. Veuillez vérifier l'orthographie ou en choisir une autre.")
             st.stop() # Arrêter l'exécution pour éviter les erreurs si la ville n'est pas trouvée
 
         # Récupérer les données météo pour cette ville
         df_meteo_global = recuperer_meteo(LAT, LON)
+
         if df_meteo_global.empty:
             st.warning("Impossible de récupérer les données météo. Certaines fonctionnalités seront limitées.")
             # st.stop() # Décidez si vous voulez arrêter ou simplement limiter les fonctionnalités
@@ -300,7 +312,7 @@ try:
                 st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}**.")
         else:
             jours_depuis_tonte_tab5 = st.slider("Jours depuis la dernière tonte (pour simulation si aucune enregistrée) :", 1, 21, constants.DEFAULT_JOURS_TONTE_SIMULATION, key="jours_tonte_slider_tab5")
-            date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tonte_tab5)
+            date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tab5)
             st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}**.")
 
         # Slider pour la hauteur cible de la pelouse
@@ -327,13 +339,16 @@ try:
         df_meteo_global,
         today,
         type_sol,
-        paillage
+        paillage,
+        etat_jardin["deficits_accumules"], # <-- NOUVEL ARGUMENT : Déficits précédents
+        etat_jardin["date_derniere_maj"] # <-- NOUVEL ARGUMENT : Date de dernière mise à jour précédente
     )
     
     # Mettre à jour l'état du jardin avec les déficits calculés aujourd'hui
     etat_jardin["date_derniere_maj"] = today
     etat_jardin["deficits_accumules"] = nouveaux_deficits
     data_manager.sauvegarder_etat_jardin(etat_jardin)
+
 
     # 🔥 Données d'alerte chaleur et pluie pour l'onglet 2
     df_futur_48h = df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=2))]
@@ -379,6 +394,7 @@ try:
              "Détail": infos_bilan
            })
 
+
     with tab2 :
         st.header("💧 Synthèse de mon Jardin")
 
@@ -394,6 +410,8 @@ try:
                 st.metric(label="🌡️ Température Max Aujourd'hui", value=f"{temp}°C")
             with col_meteo2:
                 st.metric(label="🌧️ Précipitations Aujourd'hui", value=f"{pluie:.1f} mm")
+        else:
+            st.warning("Aucune donnée météo disponible pour aujourd'hui.")
 
         if jours_chauds_a_venir >= 2:
             st.warning(f"🔥 **Alerte Chaleur :** {jours_chauds_a_venir} jour(s) avec ≥30°C à venir ! Pensez à l'hydratation.")
@@ -483,44 +501,55 @@ try:
         st.subheader("Prévisions et Historique")
 
         df_a_afficher = df_meteo_global[(df_meteo_global["date"] >= today - pd.Timedelta(days=2)) & (df_meteo_global["date"] <= today + pd.Timedelta(days=7))]
-        for _, row in df_a_afficher.iterrows():
-            jour_texte = "Aujourd'hui" if row["date"].date() == today.date() else format_date(row["date"].date(), format='full', locale='fr')
-            # Utilisez une icône météo simple basée sur les conditions (ex: soleil, pluie, nuage)
-            # Ceci est un exemple, vous devrez peut-être étendre avec une vraie logique d'icônes météo
-            icone_meteo = "☀️" if row["temp_max"] > 25 and row["pluie"] < 1 else ("🌧️" if row["pluie"] > 0 else "☁️")
+        if df_a_afficher.empty:
+            st.info("Aucune donnée météo à afficher pour la période sélectionnée.")
+        else:
+            for _, row in df_a_afficher.iterrows():
+                jour_texte = "Aujourd'hui" if row["date"].date() == today.date() else format_date(row["date"].date(), format='full', locale='fr')
+                # Utilisez une icône météo simple basée sur les conditions (ex: soleil, pluie, nuage)
+                # Ceci est un exemple, vous devrez peut-être étendre avec une vraie logique d'icônes météo
+                icone_meteo = "☀️" if row["temp_max"] > 25 and row["pluie"] < 1 else ("🌧️" if row["pluie"] > 0 else "☁️")
 
-            st.markdown(f"""
-            <div style="background-color: {'#e0f7fa' if row['date'].date() == today.date() else '#f0f8ff'}; 
-                                 border-left: 5px solid {'#007bff' if row['date'].date() == today.date() else '#ccc'};
-                                 border-radius: 8px; padding: 10px; margin-bottom: 8px;
-                                 display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <div>
-                    <b>{jour_texte}</b><br>
-                    <small>{format_date(row["date"].date(), format='dd MMM', locale='fr')}</small>
+                st.markdown(f"""
+                <div style="background-color: {'#e0f7fa' if row['date'].date() == today.date() else '#f0f8ff'}; 
+                                     border-left: 5px solid {'#007bff' if row['date'].date() == today.date() else '#ccc'};
+                                     border-radius: 8px; padding: 10px; margin-bottom: 8px;
+                                     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <b>{jour_texte}</b><br>
+                        <small>{format_date(row["date"].date(), format='dd MMM', locale='fr')}</small>
+                    </div>
+                    <div style="text-align: right;">
+                        {icone_meteo} 🌡️ {row['temp_max']}°C<br>
+                        � {row['pluie']:.1f} mm &nbsp; 🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h
+                    </div>
                 </div>
-                <div style="text-align: right;">
-                    {icone_meteo} 🌡️ {row['temp_max']}°C<br>
-                    💧 {row['pluie']:.1f} mm &nbsp; 🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
 
         st.markdown("---")
         st.subheader("Visualisation Graphique")
+        if not df_meteo_global.empty:
+            st.line_chart(df_meteo_global[["date", "temp_max"]].set_index("date"), y="temp_max", use_container_width=True)
+            st.bar_chart(df_meteo_global[["date", "pluie"]].set_index("date"), y="pluie", use_container_width=True)
+        else:
+            st.info("Aucune donnée météo disponible pour les graphiques.")
 
-        st.line_chart(df_meteo_global[["date", "temp_max"]].set_index("date"), y="temp_max", use_container_width=True)
-        st.bar_chart(df_meteo_global[["date", "pluie"]].set_index("date"), y="pluie", use_container_width=True)
 
     # Calcul des statistiques
     # Ces fonctions devront être mises à jour dans ui_components.py pour gérer la nouvelle structure du journal
     stats_arrosage = ui_components.calculer_stats_arrosage(journal) 
     stats_tonte = ui_components.calculer_stats_tonte(journal)
 
+
     with tab4:
         st.header("📊 Historique & Statistiques du Jardin")
 
         st.markdown("### Calendrier de Votre Activité")
-        ui_components.afficher_calendrier_frise(journal, today) # Cette fonction est clé ici
+        # DEBUG: Vérifier si le journal est vide avant d'appeler afficher_calendrier_frise
+        if not journal["arrosages"] and not journal["tontes"]:
+            st.info("Aucune activité enregistrée pour afficher le calendrier.")
+        else:
+            ui_components.afficher_calendrier_frise(journal, today) # Cette fonction est clé ici
 
         st.markdown("---")
 
@@ -580,6 +609,101 @@ try:
             st.dataframe(df_tontes.sort_values(by="Date", ascending=False).set_index("Date"), use_container_width=True)
         else:
             st.info("Aucune tonte enregistrée.")
+    with tab6: # Nouveau tab pour les fiches plantes
+        st.header("📚 Fiches Détaillées de Mes Plantes")
+
+        # Obtenir la liste de toutes les plantes pour la sélection
+        all_plant_names = sorted(plantes_index.keys())
+
+        if all_plant_names:
+            # Sélecteur pour choisir une plante
+            selected_plant_name = st.selectbox(
+                "Choisissez une plante pour voir ses détails :",
+                options=all_plant_names,
+                key="plant_detail_selector"
+            )
+
+            if selected_plant_name:
+                # Récupérer les infos complètes de la plante depuis l'index
+                infos_plante_detaillees = plantes_index.get(selected_plant_name)
+                
+                if infos_plante_detaillees:
+                    st.markdown(f"### {selected_plant_name.capitalize()}")
+                    st.markdown(f"**Famille :** {infos_plante_detaillees.get('famille', 'N/A').capitalize()}")
+                    st.markdown(f"**Coefficient cultural (Kc) :** {infos_plante_detaillees.get('kc', 'N/A')}")
+                    
+                    # --- Période de semis/plantation avec frise colorée ---
+                    periode_semis_str = infos_plante_detaillees.get('periode_semis', 'N/A')
+                    st.markdown(f"**Période de semis/plantation :** {periode_semis_str}")
+                    if periode_semis_str != 'N/A':
+                        months_to_highlight = ui_components.get_months_from_period_string(periode_semis_str)
+                        month_names_short = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
+                        
+                        cols = st.columns(12) # 12 colonnes pour les 12 mois
+                        for i, col in enumerate(cols):
+                            month_num = i + 1
+                            is_planting_month = month_num in months_to_highlight
+                            
+                            color = "#D4EDDA" if is_planting_month else "#F0F0F0" # Vert clair pour plantation, gris pour non
+                            text_color = "#28a745" if is_planting_month else "#6c757d" # Vert foncé ou gris foncé
+                            
+                            with col:
+                                st.markdown(
+                                    f"""
+                                    <div style="background-color: {color}; 
+                                                border-radius: 5px; 
+                                                padding: 5px 0; 
+                                                text-align: center; 
+                                                font-size: 0.7em; 
+                                                color: {text_color}; 
+                                                margin: 2px;">
+                                        {month_names_short[i]}
+                                    </div>
+                                    """, 
+                                    unsafe_allow_html=True
+                                )
+                    st.markdown("---") # Séparateur visuel après la frise
+
+                    # --- Besoins en lumière avec icônes ---
+                    besoins_lumiere_text = infos_plante_detaillees.get('besoins_lumiere', 'N/A')
+                    
+                    sunlight_icons_map = {
+                        "plein soleil": "☀️ Plein soleil",
+                        "mi-ombre": "⛅ Mi-ombre",
+                        "ombre": "☁️ Ombre",
+                        "soleil": "☀️ Plein soleil", # Catch variations
+                        "mi-soleil": "⛅ Mi-ombre", # Catch variations
+                    }
+                    
+                    display_lumiere = besoins_lumiere_text # Default to original text
+                    for keyword, icon_text in sunlight_icons_map.items():
+                        if keyword in besoins_lumiere_text.lower():
+                            display_lumiere = icon_text
+                            break
+                    st.markdown(f"**Besoins en lumière :** {display_lumiere}")
+
+
+                    st.markdown(f"**Sensibilité aux maladies :** {infos_plante_detaillees.get('sensibilite_maladies', 'N/A')}")
+                    
+                    fav_assoc = infos_plante_detaillees.get('associations_favorables')
+                    if fav_assoc and isinstance(fav_assoc, list) and fav_assoc:
+                        st.markdown(f"**Associations favorables :** {', '.join([a.capitalize() for a in fav_assoc])}")
+                    else:
+                        st.markdown("**Associations favorables :** Aucune information.")
+
+                    def_assoc = infos_plante_detaillees.get('associations_defavorables')
+                    if def_assoc and isinstance(def_assoc, list) and def_assoc:
+                        st.markdown(f"**Associations défavorables :** {', '.join([a.capitalize() for a in def_assoc])}")
+                    else:
+                        st.markdown("**Associations défavorables :** Aucune information.")
+                    
+                    st.markdown("---") # Séparateur entre les fiches
+                else:
+                    st.info(f"Détails non trouvés pour la plante : {selected_plant_name.capitalize()}.")
+            else:
+                st.info("Veuillez sélectionner une plante pour voir ses détails.")
+        else:
+            st.warning("Aucune plante disponible dans votre fichier de configuration des familles de plantes. Veuillez ajouter des plantes pour voir leurs fiches.")
 
 
 except Exception as e:
