@@ -23,8 +23,19 @@ def calculer_deficits_accumules(journal_arrosages, familles, plantes_choisies, d
     facteur_paillage_val = constants.FACTEUR_PAILLAGE_REDUCTION if paillage else 1.0
 
     # Determine the date of the last global watering to reset deficits
-    # Or an arbitrary date if no watering is recorded (using METEO_HISTORIQUE_DISPONIBLE for a recent default)
-    date_dernier_arrosage_global = journal_arrosages[-1] if journal_arrosages else today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
+    # This logic needs to be updated to handle the new journal_arrosages format (list of dicts)
+    # Filter for valid watering entries (dictionaries with a 'date' that is a Timestamp)
+    valid_arrosages = [
+        entry for entry in journal_arrosages
+        if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], (pd.Timestamp, datetime))
+    ]
+
+    if valid_arrosages:
+        # Get the date of the latest watering event
+        date_dernier_arrosage_global = max(valid_arrosages, key=lambda x: x["date"])["date"]
+    else:
+        # If no watering is recorded, use an arbitrary date for historical weather data
+        date_dernier_arrosage_global = today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
 
     for code_famille, infos_famille in familles.items():
         plantes_famille = infos_famille["plantes"]
@@ -45,9 +56,18 @@ def calculer_deficits_accumules(journal_arrosages, familles, plantes_choisies, d
         # If pluie_delta > besoin_delta, there's a surplus, so deficit is 0
         current_deficit = max(0.0, besoin_delta - pluie_delta)
 
-        # If there was an watering today, reset deficit for this family
-        if today in journal_arrosages: # Simplified check for 'today'
-             current_deficit = 0.0
+        # If there was an watering today for ANY of the plants in this family, reset deficit for this family
+        # This check needs to be updated to handle the new journal_arrosages format
+        arrosage_today_for_family = False
+        for entry in valid_arrosages:
+            if entry["date"].date() == today.date(): # Check if the watering event happened today
+                # Check if any plant in this family was part of today's watering event
+                if any(p in entry.get("plants", []) for p in plantes_famille):
+                    arrosage_today_for_family = True
+                    break
+        
+        if arrosage_today_for_family:
+            current_deficit = 0.0
 
         nouveaux_deficits[code_famille] = current_deficit
 
@@ -81,11 +101,18 @@ def croissance_herbe(temp_max, pluie, evapo):
     croissance = croissance_base * temp_facteur * pluie_facteur * evapo_facteur
     return max(0, croissance)
 
-def estimer_arrosage_le_plus_contraignant(df_futur, plantes_choisies, index_plantes, seuil_deficit, facteur_sol, facteur_paillage):
-    dates_arrosage = []
+def estimer_arrosage_le_plus_contraignant(plantes_choisies, index_plantes, df_futur, seuil_deficit, facteur_sol, facteur_paillage):
+    """
+    Estime la date du prochain arrosage nécessaire, en se basant sur la plante la plus "contraignante" (celle qui atteint son déficit le plus tôt).
+    """
+    dates_arrosage_potentielles = []
 
     for plante in plantes_choisies:
-        kc = index_plantes.get(plante, {}).get("kc", 1.0)
+        # Assurez-vous que 'plante' est une clé valide dans index_plantes
+        # et que index_plantes.get(plante) retourne un dictionnaire
+        infos_plante = index_plantes.get(plante, {})
+        kc = infos_plante.get("kc", 1.0) 
+        
         cumul_deficit = 0
 
         for _, row in df_futur.iterrows():
@@ -98,25 +125,12 @@ def estimer_arrosage_le_plus_contraignant(df_futur, plantes_choisies, index_plan
             if bilan < 0:
                 cumul_deficit += -bilan
             if cumul_deficit >= seuil_deficit:
-                dates_arrosage.append(row["date"])
+                dates_arrosage_potentielles.append(row["date"])
                 break
-    return min(dates_arrosage) if dates_arrosage else None
+    return min(dates_arrosage_potentielles) if dates_arrosage_potentielles else None
+
 
 def estimer_date_prochaine_tonte(df_futur_meteo, hauteur_actuelle_cm, hauteur_cible_cm):
-    if df_futur_meteo.empty:
-        return None
-
-    hauteur_estimee = hauteur_actuelle_cm
-    seuil_tonte_cm = hauteur_cible_cm * 1.5
-
-    for _, row in df_futur_meteo.iterrows():
-        # Ensure row values are passed as scalars
-        croissance_jour_mm = croissance_herbe(float(row["temp_max"]), float(row["pluie"]), float(row["evapo"]))
-        hauteur_estimee += (croissance_jour_mm / 10)
-
-        if hauteur_estimee >= seuil_tonte_cm:
-            return row["date"]
-    return None
     """
     Estime la date de la prochaine tonte basée sur la croissance de l'herbe et la hauteur cible.
     """
@@ -127,7 +141,8 @@ def estimer_date_prochaine_tonte(df_futur_meteo, hauteur_actuelle_cm, hauteur_ci
     seuil_tonte_cm = hauteur_cible_cm * 1.5 # Example: mow when 50% above target
 
     for _, row in df_futur_meteo.iterrows():
-        croissance_jour_mm = croissance_herbe(row["temp_max"], row["pluie"], row["evapo"])
+        # Ensure row values are passed as scalars (already done in app.py, but good to be explicit)
+        croissance_jour_mm = croissance_herbe(float(row["temp_max"]), float(row["pluie"]), float(row["evapo"]))
         hauteur_estimee += (croissance_jour_mm / 10) # Convert mm to cm
 
         if hauteur_estimee >= seuil_tonte_cm:

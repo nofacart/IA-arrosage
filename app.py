@@ -46,9 +46,23 @@ try:
     etat_jardin = data_manager.charger_etat_jardin()
 
     # Définir la date de départ pour le calcul du delta météo
-    # If no state or state too old for weather data, restart from last actual watering or a recent date.
+    # La logique doit maintenant gérer le nouveau format de journal["arrosages"] (liste de dictionnaires)
+    # Filtrer les entrées d'arrosage valides pour s'assurer que 'max' ne s'applique qu'aux dictionnaires
+    valid_arrosages_for_delta = [
+        entry for entry in journal["arrosages"]
+        if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], pd.Timestamp)
+    ]
+
+    if valid_arrosages_for_delta:
+        # Trouver la date du dernier arrosage à partir du nouveau format de dictionnaire
+        latest_watering_event_for_delta = max(valid_arrosages_for_delta, key=lambda x: x["date"])
+        latest_watering_date_journal = latest_watering_event_for_delta["date"]
+    else:
+        # Si aucun arrosage n'est enregistré, utiliser une date par défaut
+        latest_watering_date_journal = today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
+
     if etat_jardin["date_derniere_maj"] is None or etat_jardin["date_derniere_maj"] < today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE):
-        date_depart_delta_meteo = journal["arrosages"][-1] if journal["arrosages"] else today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
+        date_depart_delta_meteo = latest_watering_date_journal
     else:
         date_depart_delta_meteo = etat_jardin["date_derniere_maj"]
 
@@ -72,18 +86,48 @@ try:
         col_arrosage, col_tonte = st.columns(2)
 
         with col_arrosage:
-            if st.button("💧 J'ai arrosé aujourd'hui", use_container_width=True):
-                journal["arrosages"].append(today)
-                data_manager.sauvegarder_journal(journal)
-                # After watering, reset deficits for chosen plants
-                for plante_id in plantes_par_defaut: # Use plantes_par_defaut which holds the currently selected plants
-                    if plante_id in plantes_index:
-                        family_code = plantes_index[plante_id]["famille"]
-                        if family_code in etat_jardin["deficits_accumules"]:
-                            etat_jardin["deficits_accumules"][family_code] = 0.0
-                data_manager.sauvegarder_etat_jardin(etat_jardin)
-                st.success("💧 Arrosage enregistré ! Le déficit des plantes concernées a été mis à jour.")
-                st.rerun()
+            # Utiliser un formulaire Streamlit pour une meilleure gestion des widgets
+            with st.form("arrosage_form"):
+                st.subheader("💧 Enregistrer un Arrosage")
+                
+                # 'plantes_par_defaut' est déjà chargé depuis 'parametres_utilisateur.json'
+                available_plants_for_selection = plantes_par_defaut
+
+                # Permettre à l'utilisateur de sélectionner plusieurs plantes, par défaut toutes les plantes cultivées
+                selected_plants_for_watering = st.multiselect(
+                    "Quelles plantes ou zones avez-vous arrosées ?",
+                    options=available_plants_for_selection,
+                    default=available_plants_for_selection, # Par défaut, toutes les plantes sont sélectionnées
+                    key="arrosage_multiselect"
+                )
+                
+                # Les champs de quantité, durée, méthode, notes ont été retirés comme demandé.
+
+                submitted_watering = st.form_submit_button("💧 Enregistrer cet arrosage")
+
+                if submitted_watering:
+                    if not selected_plants_for_watering:
+                        st.warning("Veuillez sélectionner au moins une plante à arroser.")
+                    else:
+                        new_watering_event = {
+                            "date": today, # Utilise le Timestamp 'today'
+                            "plants": selected_plants_for_watering,
+                            # Les champs amount_liters, duration_minutes, method, notes ne sont plus enregistrés
+                        }
+                        
+                        journal["arrosages"].append(new_watering_event)
+                        data_manager.sauvegarder_journal(journal)
+                        
+                        # Après l'arrosage, réinitialiser les déficits pour les familles des plantes choisies
+                        for plant_name in selected_plants_for_watering: # Itérer sur les noms des plantes sélectionnées
+                            if plant_name in plantes_index: # Vérifier que le nom de la plante est dans l'index principal des plantes
+                                family_code = plantes_index[plant_name].get("famille") # Obtenir le code de la famille
+                                if family_code and family_code in etat_jardin["deficits_accumules"]:
+                                    etat_jardin["deficits_accumules"][family_code] = 0.0
+                        data_manager.sauvegarder_etat_jardin(etat_jardin)
+                        
+                        st.success(f"💧 Arrosage enregistré pour {', '.join(selected_plants_for_watering)} !")
+                        st.rerun() # Re-exécuter pour mettre à jour les données affichées
 
         with col_tonte:
             hauteur_tonte_input = st.slider("Hauteur après tonte (cm) :", constants.MIN_HAUTEUR_TONTE_SLIDER, constants.MAX_HAUTEUR_TONTE_SLIDER, hauteur_tonte_input_default, key="daily_tonte_hauteur")
@@ -96,8 +140,17 @@ try:
         st.markdown("---")
         st.markdown("### Votre Historique Rapide")
 
-        if journal["arrosages"]:
-            st.info(f"**Dernier arrosage :** {format_date(journal['arrosages'][-1].date(), format='full', locale='fr')}")
+        # Filtrer les entrées d'arrosage valides pour l'affichage de l'historique rapide
+        valid_arrosages_for_display = [
+            entry for entry in journal["arrosages"]
+            if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], pd.Timestamp)
+        ]
+
+        if valid_arrosages_for_display:
+            # Obtenir le dernier événement d'arrosage (maintenant un dictionnaire)
+            latest_watering_event = max(valid_arrosages_for_display, key=lambda x: x["date"])
+            plants_watered_str = ", ".join(latest_watering_event.get("plants", ["N/A"]))
+            st.info(f"**Dernier arrosage :** {format_date(latest_watering_event['date'].date(), format='full', locale='fr')} pour **{plants_watered_str}**")
         else:
             st.info("**Aucun arrosage enregistré pour l'instant.**")
 
@@ -122,10 +175,10 @@ try:
             default=plantes_par_defaut,
             key="plantes_selection_tab5"
         )
-        # Update plantes_par_defaut for global calculations if changed in UI
+        # Mettre à jour plantes_par_defaut pour les calculs globaux si modifié dans l'UI
         if plantes_choisies != plantes_par_defaut:
             plantes_par_defaut = plantes_choisies
-            # Re-save preferences immediately if plants change in UI
+            # Re-sauvegarder les préférences immédiatement si les plantes changent dans l'UI
             prefs["plantes"] = plantes_choisies
             data_manager.enregistrer_preferences_utilisateur(prefs)
 
@@ -136,23 +189,23 @@ try:
             data_manager.charger_preferences_utilisateur.clear()
             data_manager.charger_familles.clear()
             data_manager.charger_etat_jardin.clear()
-            data_manager.charger_journal.clear() # Clear journal cache too on full reset
+            data_manager.charger_journal.clear() # Vider le cache du journal aussi lors d'une réinitialisation complète
             st.success("Paramètres réinitialisés ! Actualisation de la page...")
             st.rerun()
 
         st.markdown("---")
         st.subheader("📍 Lieu et Météo")
 
-        # Text input for city
+        # Entrée texte pour la ville
         ville = st.text_input("Ville ou commune (ex: Beauzelle) :", prefs.get("ville", "Beauzelle"), key="ville_input_tab5")
         
-        # Update preferences with new city if different
+        # Mettre à jour les préférences avec la nouvelle ville si différente
         if ville != prefs.get("ville", "Beauzelle"):
             prefs["ville"] = ville
             data_manager.enregistrer_preferences_utilisateur(prefs)
-            get_coords_from_city.clear() # Clear cache for new city coords
-            recuperer_meteo.clear() # Clear meteo cache for new city
-            st.rerun() # Rerun to apply city change
+            get_coords_from_city.clear() # Vider le cache pour les nouvelles coordonnées de la ville
+            recuperer_meteo.clear() # Vider le cache météo pour la nouvelle ville
+            st.rerun() # Re-exécuter pour appliquer le changement de ville
 
         infos_ville = get_coords_from_city(ville)
 
@@ -160,60 +213,70 @@ try:
             LAT = infos_ville["lat"]
             LON = infos_ville["lon"]
             st.info(f"📍 Ville sélectionnée : **{infos_ville['name']}**, {infos_ville['country']} \n"
-                                    f"🌐 Coordonnées : `{LAT:.2f}, {LON:.2f}`")
+                                     f"🌐 Coordonnées : `{LAT:.2f}, {LON:.2f}`")
         else:
             st.error("❌ Ville non trouvée. Veuillez vérifier l'orthographe ou en choisir une autre.")
-            st.stop() # Stop execution to prevent errors if city is not found
+            st.stop() # Arrêter l'exécution pour éviter les erreurs si la ville n'est pas trouvée
 
-        # Retrieve weather data for this city
+        # Récupérer les données météo pour cette ville
         df_meteo_global = recuperer_meteo(LAT, LON)
         if df_meteo_global.empty:
             st.warning("Impossible de récupérer les données météo. Certaines fonctionnalités seront limitées.")
-            # st.stop() # Decide if you want to stop or just limit functionality
+            # st.stop() # Décidez si vous voulez arrêter ou simplement limiter les fonctionnalités
 
-        # --- ADD THESE LINES TO ENSURE NUMERIC TYPES ---
+        # --- AJOUTER CES LIGNES POUR ASSURER LES TYPES NUMÉRIQUES ---
         df_meteo_global["temp_max"] = pd.to_numeric(df_meteo_global["temp_max"], errors='coerce')
         df_meteo_global["pluie"] = pd.to_numeric(df_meteo_global["pluie"], errors='coerce')
         df_meteo_global["evapo"] = pd.to_numeric(df_meteo_global["evapo"], errors='coerce')
 
-        # Handle potential NaN values that might result from 'coerce' if non-numeric data was present
-        # For weather data, filling with 0 or a reasonable default might be appropriate
-        df_meteo_global = df_meteo_global.fillna(0) # Or use df_meteo_global.bfill().ffill() for more sophisticated filling
+        # Gérer les valeurs NaN potentielles qui pourraient résulter de 'coerce' si des données non numériques étaient présentes
+        # Pour les données météo, remplir avec 0 ou une valeur par défaut raisonnable peut être approprié
+        df_meteo_global = df_meteo_global.fillna(0) # Ou utiliser df_meteo_global.bfill().ffill() pour un remplissage plus sophistiqué
 
         st.markdown("---")
         st.subheader("🌍 Caractéristiques de votre sol")
 
-        # Soil type selection
+        # Sélection du type de sol
         type_sol = st.selectbox("Type de sol :", ["Limoneux", "Sableux", "Argileux"],
                                     index=["Limoneux", "Sableux", "Argileux"].index(type_sol_defaut),
                                     key="type_sol_select_tab5")
-        # Checkbox for mulching
+        # Case à cocher pour le paillage
         paillage = st.checkbox("Présence de paillage", value=paillage_defaut, key="paillage_checkbox_tab5")
 
-        # Save preferences (city, plants, soil, mulching)
+        # Sauvegarder les préférences (ville, plantes, sol, paillage)
         if (type_sol != type_sol_defaut) or (paillage != paillage_defaut):
             prefs.update({"plantes": plantes_choisies, "paillage": paillage, "type_sol": type_sol})
             data_manager.enregistrer_preferences_utilisateur(prefs)
             st.success("Vos préférences ont été enregistrées.")
-            st.rerun() # Rerun to apply new soil/mulch factors
+            st.rerun() # Re-exécuter pour appliquer les nouveaux facteurs sol/paillage
 
 
         st.markdown("---")
         st.subheader("💧 Historique Arrosage")
 
-        # Display last recorded watering or slider if none
-        if journal["arrosages"]:
-            date_dernier_arrosage_tab5 = journal["arrosages"][-1]
+        # Filtrer les entrées d'arrosage valides pour l'affichage de l'historique dans tab5
+        valid_arrosages_tab5 = [
+            entry for entry in journal["arrosages"]
+            if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], pd.Timestamp)
+        ]
+
+        # Afficher le dernier arrosage enregistré ou un slider si aucun
+        if valid_arrosages_tab5:
+            # Obtenir l'événement du dernier arrosage (qui est maintenant un dictionnaire)
+            date_dernier_arrosage_tab5_event = max(valid_arrosages_tab5, key=lambda x: x["date"])
+            date_dernier_arrosage_tab5 = date_dernier_arrosage_tab5_event["date"]
+            
             jours_depuis_tab5 = (today - date_dernier_arrosage_tab5).days
-            st.markdown(f"💧 **Dernier arrosage enregistré :** il y a **{jours_depuis_tab5} jour(s)** (le {format_date(date_dernier_arrosage_tab5.date())})")
+            plants_watered_str_tab5 = ", ".join(date_dernier_arrosage_tab5_event.get("plants", ["N/A"]))
+            st.markdown(f"💧 **Dernier arrosage enregistré :** il y a **{jours_depuis_tab5} jour(s)** (le {format_date(date_dernier_arrosage_tab5.date(), locale='fr')}) pour **{plants_watered_str_tab5}**")
         else:
-            # Slider to simulate last watering date if journal is empty
+            # Slider pour simuler la date du dernier arrosage si le journal est vide
             jours_depuis_tab5 = st.slider("Jours depuis le dernier arrosage (pour simulation si aucun enregistré) :", 0, 14, constants.DEFAULT_JOURS_ARROSAGE_SIMULATION, key="jours_arrosage_slider_tab5")
             date_dernier_arrosage_tab5 = today - pd.Timedelta(days=jours_depuis_tab5)
-            st.info(f"Simule le dernier arrosage au **{format_date(date_dernier_arrosage_tab5.date())}**.")
+            st.info(f"Simule le dernier arrosage au **{format_date(date_dernier_arrosage_tab5.date(), locale='fr')}**.")
 
 
-        # Calculate soil and mulching factors and deficit thresholds
+        # Calculer les facteurs sol et paillage et les seuils de déficit
         facteur_sol = constants.FACTEUR_SOL.get(type_sol, 1.0)
         facteur_paillage = constants.FACTEUR_PAILLAGE_REDUCTION if paillage else 1.0
         SEUIL_DEFICIT = constants.SEUILS_DEFICIT_SOL.get(type_sol, 20)
@@ -224,27 +287,27 @@ try:
         st.markdown("---")
         st.subheader("✂️ Historique Tonte")
 
-        # Display last recorded mowing or slider if none
+        # Afficher la dernière tonte enregistrée ou un slider si aucune
         if journal["tontes"]:
             valid_tontes_tab5 = [t for t in journal["tontes"] if isinstance(t, dict) and "date" in t]
             if valid_tontes_tab5:
                 date_dernier_tonte_tab5 = max(valid_tontes_tab5, key=lambda x: x["date"])["date"]
                 jours_depuis_tonte_tab5 = (today - date_dernier_tonte_tab5).days
-                st.markdown(f"✂️ **Dernière tonte enregistrée :** il y a **{jours_depuis_tonte_tab5} jour(s)** (le {format_date(date_dernier_tonte_tab5.date())})")
+                st.markdown(f"✂️ **Dernière tonte enregistrée :** il y a **{jours_depuis_tonte_tab5} jour(s)** (le {format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')})")
             else:
                 jours_depuis_tonte_tab5 = st.slider("Jours depuis la dernière tonte (pour simulation si aucune enregistrée) :", 1, 21, constants.DEFAULT_JOURS_TONTE_SIMULATION, key="jours_tonte_slider_tab5_empty")
                 date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tonte_tab5)
-                st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date())}**.")
+                st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}**.")
         else:
             jours_depuis_tonte_tab5 = st.slider("Jours depuis la dernière tonte (pour simulation si aucune enregistrée) :", 1, 21, constants.DEFAULT_JOURS_TONTE_SIMULATION, key="jours_tonte_slider_tab5")
             date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tonte_tab5)
-            st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date())}**.")
+            st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}**.")
 
-        # Slider for target lawn height
+        # Slider pour la hauteur cible de la pelouse
         hauteur_cible_cm = st.slider("Hauteur cible de votre pelouse (cm) :", constants.MIN_HAUTEUR_TONTE_SLIDER, constants.MAX_HAUTEUR_TONTE_SLIDER, constants.DEFAULT_HAUTEUR_CIBLE_CM, key="hauteur_cible_slider_tab5")
         st.caption(f"Vous visez une hauteur de coupe de **{hauteur_cible_cm} cm** pour votre pelouse.")
 
-        # Filter meteo data for mowing growth calculation
+        # Filtrer les données météo pour le calcul de la croissance de la tonte
         df_tonte_calc_period = df_meteo_global[(df_meteo_global["date"] >= date_dernier_tonte_tab5) & (df_meteo_global["date"] <= today)].copy()
 
     
@@ -253,43 +316,43 @@ try:
     )
     croissance_totale_mm = df_tonte_calc_period["croissance"].sum()
 
-    hauteur_initiale_apres_tonte = hauteur_tonte_input_default # Use the default or last recorded height
+    hauteur_initiale_apres_tonte = hauteur_tonte_input_default # Utiliser la hauteur par défaut ou la dernière enregistrée
     hauteur_estimee_cm = hauteur_initiale_apres_tonte + (croissance_totale_mm / 10)
 
-    # Recalculate deficits for the current day based on latest info and last update
+    # Recalculer les déficits pour le jour actuel en fonction des dernières informations et de la dernière mise à jour
     nouveaux_deficits = garden_logic.calculer_deficits_accumules(
-        journal["arrosages"],
+        journal["arrosages"], # Passer le journal avec la nouvelle structure
         familles,
-        plantes_choisies, # Use plantes_choisies from multiselect for current run
+        plantes_choisies, # Utiliser plantes_choisies du multiselect pour l'exécution actuelle
         df_meteo_global,
         today,
         type_sol,
         paillage
     )
     
-    # Update garden state with calculated deficits today
+    # Mettre à jour l'état du jardin avec les déficits calculés aujourd'hui
     etat_jardin["date_derniere_maj"] = today
     etat_jardin["deficits_accumules"] = nouveaux_deficits
     data_manager.sauvegarder_etat_jardin(etat_jardin)
 
-    # 🔥 Heat and rain alert data for Tab 2
+    # 🔥 Données d'alerte chaleur et pluie pour l'onglet 2
     df_futur_48h = df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=2))]
     jours_chauds_a_venir = (df_futur_48h["temp_max"] >= 30).sum()
     pluie_prochaine_48h_for_reco = df_futur_48h["pluie"].sum()
 
-    # === 💡 CALCULATE RECOMMENDATIONS PER PLANT ===
+    # === 💡 CALCULER LES RECOMMANDATIONS PAR PLANTE ===
     table_data = []
     pluie_prochaine_24h = df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=1))]["pluie"].sum()
 
-    for code_plante in plantes_choisies: # Use plantes_choisies for recommendations
+    for code_plante in plantes_choisies: # Utiliser plantes_choisies pour les recommandations
         if code_plante not in plantes_index:
             continue
 
         infos_plante = plantes_index[code_plante]
         code_famille = infos_plante["famille"]
         
-        # Now, we use the CALCULATED and SAVED deficit for today
-        deficit = nouveaux_deficits.get(code_famille, 0.0) # Deficit is per family
+        # Maintenant, nous utilisons le déficit CALCULÉ et SAUVEGARDÉ pour aujourd'hui
+        deficit = nouveaux_deficits.get(code_famille, 0.0) # Le déficit est par famille
 
         if deficit <= 0:
             besoin, infos_bilan = False, f"✅ Excédent ou pas de déficit : {deficit:.1f} mm"
@@ -310,7 +373,7 @@ try:
                 besoin, infos_bilan = True, f"💧 Déficit : {deficit:.1f} mm"
 
         table_data.append({
-             "Plante": code_plante.capitalize(), # Display the plant name
+             "Plante": code_plante.capitalize(), # Afficher le nom de la plante
              "Recommandation": "Arroser" if besoin else "Pas besoin",
              "Couleur": "🟧" if besoin else "🟦",
              "Détail": infos_bilan
@@ -319,7 +382,7 @@ try:
     with tab2 :
         st.header("💧 Synthèse de mon Jardin")
 
-        # Today's Weather & Alerts (top)
+        # Météo actuelle et alertes (en haut)
         st.markdown("### Météo Actuelle & Alertes")
         meteo_auj = df_meteo_global[df_meteo_global["date"] == today]
         if not meteo_auj.empty:
@@ -339,7 +402,7 @@ try:
 
         st.markdown("---")
 
-        # General Recommendations (Watering, Mowing)
+        # Recommandations générales (Arrosage, Tonte)
         st.markdown("### Recommandations Générales")
         col_reco1, col_reco2 = st.columns(2)
 
@@ -359,14 +422,14 @@ try:
 
         st.markdown("---")
 
-        # Detailed Plant Recommendations
+        # Recommandations détaillées par plante
         st.markdown("### 🌱 Recommandations par Plante")
         for ligne in table_data:
             color_code = "#F8D7DA" if ligne["Recommandation"] == "Arroser" else "#D4EDDA"
             emoji = "💧" if ligne["Recommandation"] == "Arroser" else "✅"
             st.markdown(f"<div style='background-color: {color_code}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
-                                f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Détail']}</div>",
-                                unsafe_allow_html=True)
+                                     f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Détail']}</div>",
+                                     unsafe_allow_html=True)
 
         st.markdown("---")
 
@@ -379,9 +442,14 @@ try:
             if arrosage_necessaire_aujourdhui:
                 st.warning("💧 **Arrosage nécessaire aujourd'hui** pour certaines plantes.")
             else:
+                # La fonction estimer_arrosage_le_plus_contraignant prend journal["arrosages"] et retourne une date
                 date_prochain_arrosage = garden_logic.estimer_arrosage_le_plus_contraignant(
-                    df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=7))], # Limiter la prévision
-                    plantes_choisies, plantes_index, SEUIL_DEFICIT, facteur_sol, facteur_paillage
+                    plantes_choisies, # Utiliser plantes_choisies du multiselect pour l'exécution actuelle
+                    plantes_index, # <-- Ajout de index_plantes
+                    df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=constants.DEFAULT_JOURS_ARROSAGE_SIMULATION))], # Limiter la prévision
+                    SEUIL_DEFICIT, # <-- Utilisation de la variable SEUIL_DEFICIT
+                    facteur_sol, # <-- Utilisation de la variable facteur_sol
+                    facteur_paillage # <-- Utilisation de la variable facteur_paillage
                 )
                 if date_prochain_arrosage:
                     nb_jours = (date_prochain_arrosage - today).days
@@ -423,9 +491,9 @@ try:
 
             st.markdown(f"""
             <div style="background-color: {'#e0f7fa' if row['date'].date() == today.date() else '#f0f8ff'}; 
-                        border-left: 5px solid {'#007bff' if row['date'].date() == today.date() else '#ccc'};
-                        border-radius: 8px; padding: 10px; margin-bottom: 8px;
-                        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                 border-left: 5px solid {'#007bff' if row['date'].date() == today.date() else '#ccc'};
+                                 border-radius: 8px; padding: 10px; margin-bottom: 8px;
+                                 display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <div>
                     <b>{jour_texte}</b><br>
                     <small>{format_date(row["date"].date(), format='dd MMM', locale='fr')}</small>
@@ -444,7 +512,8 @@ try:
         st.bar_chart(df_meteo_global[["date", "pluie"]].set_index("date"), y="pluie", use_container_width=True)
 
     # Calcul des statistiques
-    stats_arrosage = ui_components.calculer_stats_arrosage(journal)
+    # Ces fonctions devront être mises à jour dans ui_components.py pour gérer la nouvelle structure du journal
+    stats_arrosage = ui_components.calculer_stats_arrosage(journal) 
     stats_tonte = ui_components.calculer_stats_tonte(journal)
 
     with tab4:
@@ -456,16 +525,16 @@ try:
         st.markdown("---")
 
         st.markdown("### Aperçu Rapide de Votre Suivi")
-        col_arrosage, col_tonte = st.columns(2)
+        col_arrosage_stats, col_tonte_stats = st.columns(2) # Renommé pour éviter les conflits avec col_arrosage, col_tonte ci-dessus
 
-        with col_arrosage:
+        with col_arrosage_stats:
             st.markdown("#### 💧 Arrosages")
             st.metric(label="Total", value=stats_arrosage["nb_arrosages"])
             st.metric(label="Fréquence Moyenne", value=f"{stats_arrosage['freq_moyenne_jours']} jours")
             if stats_arrosage["dernier_arrosage_date"]:
                 st.caption(f"Dernier : {format_date(stats_arrosage['dernier_arrosage_date'], format='medium', locale='fr')}")
 
-        with col_tonte:
+        with col_tonte_stats:
             st.markdown("#### ✂️ Tontes")
             st.metric(label="Total", value=stats_tonte["nb_tontes"])
             st.metric(label="Fréquence Moyenne", value=f"{stats_tonte['freq_moyenne_jours']} jours")
@@ -474,6 +543,44 @@ try:
                 st.caption(f"Dernière : {format_date(stats_tonte['derniere_tonte_date'], format='medium', locale='fr')}")
 
         st.markdown("---")
+
+        st.markdown("### Visualisation du Journal") # Ajout d'un titre pour plus de clarté
+
+        # Afficher les événements d'arrosage
+        st.markdown("#### Historique des Arrosages Détaillé")
+        
+        # Filtrer journal["arrosages"] pour s'assurer que toutes les entrées sont des dictionnaires bien formés
+        # C'est une étape défensive pour éviter l'erreur "Lengths must match" si une entrée mal formée s'est glissée
+        valid_journal_arrosages_for_display = [
+            entry for entry in journal["arrosages"]
+            if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], pd.Timestamp)
+        ]
+
+        # Créer un DataFrame à partir de la nouvelle structure d'arrosages
+        arrosage_display_data = []
+        for entry in valid_journal_arrosages_for_display: # Utiliser la liste filtrée ici
+            arrosage_display_data.append({
+                "Date": entry["date"].date(),
+                "Plantes arrosées": ", ".join(entry.get("plants", ["N/A"])),
+                # Les champs "Quantité (L)", "Durée (min)", "Méthode", "Notes" ne sont plus affichés
+            })
+
+        df_arrosages = pd.DataFrame(arrosage_display_data)
+        if not df_arrosages.empty:
+            st.dataframe(df_arrosages.sort_values(by="Date", ascending=False).set_index("Date"), use_container_width=True)
+        else:
+            st.info("Aucun arrosage enregistré.")
+
+        # Afficher les événements de tonte (pas de changement nécessaire ici)
+        st.markdown("#### Historique des Tontes")
+        valid_tontes_for_df = [{"Date": t["date"].date(), "Hauteur (cm)": t["hauteur"]}
+                               for t in journal["tontes"] if isinstance(t, dict) and "date" in t and "hauteur" in t and isinstance(t["date"], pd.Timestamp)]
+        df_tontes = pd.DataFrame(valid_tontes_for_df)
+        if not df_tontes.empty:
+            st.dataframe(df_tontes.sort_values(by="Date", ascending=False).set_index("Date"), use_container_width=True)
+        else:
+            st.info("Aucune tonte enregistrée.")
+
 
 except Exception as e:
     st.error(f"Une erreur générale est survenue : {e}")

@@ -4,35 +4,37 @@ import json
 import os
 from datetime import datetime
 
-# Importation des chemins depuis constants
+# Importation des chemins depuis constants (assurez-vous que constants.PARAM_PATH est défini)
 import constants
+
+# Helper function to load JSON files safely
+def _load_json_file(filepath, default_data):
+    """Helper to load JSON or return default data if file not found or corrupted."""
+    if not os.path.exists(filepath):
+        return default_data
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+            else:
+                st.warning(f"Le fichier {filepath} contient des données mal formées (pas un dictionnaire). Retourne les données par défaut.")
+                return default_data
+    except json.JSONDecodeError as e:
+        st.error(f"Erreur de lecture du fichier JSON {filepath}. Le fichier est peut-être corrompu ou mal formaté. Erreur: {e}")
+        return default_data
+    except Exception as e:
+        st.error(f"Une erreur inattendue est survenue lors du chargement de {filepath} : {e}")
+        return default_data
+
 
 # === Chargement / Sauvegarde des préférences utilisateur ===
 def charger_preferences_utilisateur():
-    """Charge les préférences utilisateur depuis un fichier JSON local.
-
-    Retourne un dictionnaire des préférences utilisateur si le fichier existe et est valide,
-    sinon un dictionnaire vide.
-
-    Returns:
-        dict: Préférences utilisateur.
-    """
-    if os.path.exists(constants.PARAM_PATH):
-        try:
-            with open(constants.PARAM_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, dict):
-                    return data
-        except Exception:
-            return {}
-    return {}
+    """Charge les préférences utilisateur depuis un fichier JSON local."""
+    return _load_json_file(constants.PARAM_PATH, {})
 
 def enregistrer_preferences_utilisateur(prefs: dict):
-    """Enregistre les préférences utilisateur dans un fichier JSON.
-
-    Args:
-        prefs (dict): Dictionnaire des préférences utilisateur à sauvegarder.
-    """
+    """Enregistre les préférences utilisateur dans un fichier JSON."""
     try:
         with open(constants.PARAM_PATH, "w", encoding="utf-8") as f:
             json.dump(prefs, f, ensure_ascii=False, indent=2)
@@ -41,75 +43,106 @@ def enregistrer_preferences_utilisateur(prefs: dict):
 
 # === Journal des actions (arrosage et tonte) ===
 def charger_journal():
-    if os.path.exists(constants.JOURNAL_PATH):
-        try:
-            with open(constants.JOURNAL_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
+    journal_data = _load_json_file(constants.JOURNAL_PATH, {"arrosages": [], "tontes": []})
 
-            # --- Process 'arrosages' list ---
-            if "arrosages" in data and isinstance(data["arrosages"], list):
-                processed_arrosages = []
-                for d_str in data["arrosages"]:
-                    try:
-                        processed_arrosages.append(pd.to_datetime(d_str))
-                    except (ValueError, TypeError):
-                        # Handle cases where a date string might be malformed
-                        st.warning(f"Impossible de convertir la date d'arrosage '{d_str}'. Ignorée.")
-                        continue
-                data["arrosages"] = processed_arrosages
+    # Load user preferences to get current plants for old watering entries
+    # This is a critical step for backward compatibility if old string dates exist
+    user_prefs = charger_preferences_utilisateur()
+    current_cultivated_plants = user_prefs.get("plantes", [])
+
+    # --- Process 'arrosages' list ---
+    processed_arrosages = []
+    raw_arrosages = journal_data.get("arrosages", [])
+
+    for i, entry in enumerate(raw_arrosages):
+        if isinstance(entry, str): # Handle old format: just a date string
+            try:
+                processed_arrosages.append({
+                    "date": pd.to_datetime(entry),
+                    "plants": current_cultivated_plants, # Assign all current plants to old entries
+                    "notes": "Ancien enregistrement - toutes plantes arrosées."
+                })
+            except (ValueError, TypeError) as e:
+                st.warning(f"Impossible de convertir l'ancienne date d'arrosage '{entry}' à l'index {i}. Ignorée. Erreur: {e}")
+        elif isinstance(entry, dict) and "date" in entry: # Handle new dictionary format
+            try:
+                # Ensure 'date' is a Timestamp
+                entry_date = pd.to_datetime(entry["date"])
+                entry["date"] = entry_date
+
+                # Ensure 'plants' key exists and is a list
+                if "plants" not in entry or not isinstance(entry["plants"], list):
+                    entry["plants"] = [] # Default to empty list if missing or wrong type
+                
+                # Add other optional fields with defaults if they might be missing from older entries
+                # These fields are not recorded by the app currently, but might exist in old data
+                entry["amount_liters"] = entry.get("amount_liters")
+                entry["duration_minutes"] = entry.get("duration_minutes")
+                entry["method"] = entry.get("method")
+                entry["notes"] = entry.get("notes")
+
+                processed_arrosages.append(entry)
+            except (ValueError, TypeError) as e:
+                # Safely get date for warning if entry is a dict but date conversion fails
+                date_for_warning = entry.get('date', 'N/A') if isinstance(entry, dict) else 'N/A'
+                st.warning(f"Impossible de convertir la date d'arrosage '{date_for_warning}' dans l'entrée {i}. Ignorée. Erreur: {e}")
+        else:
+            # This 'else' block catches any entry that is NEITHER a string NOR a dictionary, or a dict without 'date'
+            st.warning(f"Entrée d'arrosage mal formée ou inattendue à l'index {i} : {entry}. Ignorée.")
+    journal_data["arrosages"] = processed_arrosages
+
+    # --- Process 'tontes' list --- (no change needed here as it was already robust for dicts)
+    processed_tontes = []
+    for tonte_entry in journal_data.get("tontes", []):
+        if isinstance(tonte_entry, dict) and "date" in tonte_entry:
+            try:
+                tonte_entry["date"] = pd.to_datetime(tonte_entry["date"])
+                processed_tontes.append(tonte_entry)
+            except (ValueError, TypeError) as e:
+                st.warning(f"Impossible de convertir la date de tonte '{tonte_entry.get('date', 'N/A')}'. Entrée ignorée. Erreur: {e}")
+        else:
+            st.warning(f"Entrée de tonte mal formée : {tonte_entry}. Ignorée.")
+    journal_data["tontes"] = processed_tontes
+
+    return journal_data
+
+def sauvegarder_journal(journal_data):
+    # Create a deep copy to avoid modifying the original dict during serialization
+    # This copy logic is important to prevent issues with cached objects
+    data_to_save = {
+        "arrosages": [],
+        "tontes": []
+    }
+    
+    if "arrosages" in journal_data and journal_data["arrosages"]:
+        serialized_arrosages = []
+        for entry in journal_data["arrosages"]:
+            if isinstance(entry, dict) and "date" in entry:
+                # Create a new dictionary for each entry to avoid modifying the original
+                serialized_entry = {
+                    "date": entry["date"].isoformat(),
+                    "plants": entry.get("plants", []),
+                    # Only include these if they are not None, as per user request to not record them
+                    "amount_liters": entry.get("amount_liters"), 
+                    "duration_minutes": entry.get("duration_minutes"),
+                    "method": entry.get("method"),
+                    "notes": entry.get("notes")
+                }
+                # Remove None values from the dictionary before saving to keep JSON clean
+                serialized_entry = {k: v for k, v in serialized_entry.items() if v is not None}
+                serialized_arrosages.append(serialized_entry)
             else:
-                data["arrosages"] = [] # Ensure it's a list if missing or wrong type
-
-            # --- Process 'tontes' list ---
-            if "tontes" in data and isinstance(data["tontes"], list):
-                processed_tontes = []
-                for tonte_entry in data["tontes"]:
-                    if isinstance(tonte_entry, dict) and "date" in tonte_entry:
-                        date_val = tonte_entry["date"]
-                        try:
-                            # Handle the specific case where 'date' might be a list (backward compatibility)
-                            if isinstance(date_val, list):
-                                # Convert list of date strings to Timestamps, find max, then convert to single Timestamp
-                                tonte_dates_parsed = [pd.to_datetime(d) for d in date_val]
-                                tonte_entry["date"] = max(tonte_dates_parsed)
-                            elif isinstance(date_val, str):
-                                # Ensure single date string is converted to Timestamp
-                                tonte_entry["date"] = pd.to_datetime(date_val)
-                            # If it's already a Timestamp, leave it as is
-                            elif not isinstance(date_val, pd.Timestamp):
-                                raise ValueError("Date de tonte inattendue.") # Catch non-str/non-list types
-
-                            processed_tontes.append(tonte_entry)
-
-                        except (ValueError, TypeError) as e:
-                            st.warning(f"Impossible de convertir la date de tonte '{date_val}'. Entrée ignorée. Erreur: {e}")
-                            continue # Skip this malformed entry
-                    else:
-                        st.warning(f"Entrée de tonte mal formée : {tonte_entry}. Ignorée.")
-                data["tontes"] = processed_tontes
+                st.warning(f"Impossible de sérialiser l'entrée d'arrosage : {entry}. Ignorée.")
+        data_to_save["arrosages"] = serialized_arrosages
+    
+    if "tontes" in journal_data and journal_data["tontes"]:
+        for tonte in journal_data["tontes"]:
+            if isinstance(tonte, dict) and isinstance(tonte.get("date"), pd.Timestamp):
+                serialized_tonte = tonte.copy() # Copy the dict
+                serialized_tonte["date"] = serialized_tonte["date"].isoformat()
+                data_to_save["tontes"].append(serialized_tonte)
             else:
-                data["tontes"] = [] # Ensure it's a list if missing or wrong type
-
-            return data
-        except json.JSONDecodeError as e:
-            st.error(f"Erreur de lecture du fichier journal_jardin.json. Le fichier est peut-être corrompu ou mal formaté. Erreur: {e}")
-            # Consider backing up or deleting the corrupt file if this happens often
-            return {"arrosages": [], "tontes": []}
-        except Exception as e:
-            st.error(f"Une erreur inattendue est survenue lors du chargement du journal : {e}")
-            return {"arrosages": [], "tontes": []}
-    return {"arrosages": [], "tontes": []}
-
-def sauvegarder_journal(data):
-    data_to_save = data.copy()
-
-    if "arrosages" in data_to_save and data_to_save["arrosages"]:
-        data_to_save["arrosages"] = [d.isoformat() for d in data_to_save["arrosages"]]
-
-    if "tontes" in data_to_save and data_to_save["tontes"]:
-        for tonte in data_to_save["tontes"]:
-            if isinstance(tonte.get("date"), pd.Timestamp):
-                tonte["date"] = tonte["date"].isoformat()
+                st.warning(f"Impossible de sérialiser l'entrée de tonte : {tonte}. Ignorée.")
 
     try:
         with open(constants.JOURNAL_PATH, "w", encoding="utf-8") as f:
@@ -121,45 +154,29 @@ def sauvegarder_journal(data):
 @st.cache_data(ttl=86400) # Cache pour 24h, se rafraîchit si le fichier change ou après 24h
 def charger_etat_jardin():
     """Charge l'état du déficit hydrique du jardin depuis un fichier JSON."""
-    try:
-        with open(constants.ETAT_JARDIN_FILE, 'r', encoding='utf-8') as f:
-            etat = json.load(f)
-            # Convertir la date en pd.Timestamp pour faciliter les comparaisons
-            etat["date_derniere_maj"] = pd.to_datetime(etat["date_derniere_maj"])
-            return etat
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Retourne un état initial si le fichier n'existe pas ou est corrompu
-        return {
-            "date_derniere_maj": None,
-            "deficits_accumules": {}
-        }
+    etat = _load_json_file(constants.ETAT_JARDIN_FILE, {
+        "date_derniere_maj": None,
+        "deficits_accumules": {}
+    })
+    if etat["date_derniere_maj"]:
+        etat["date_derniere_maj"] = pd.to_datetime(etat["date_derniere_maj"])
+    return etat
 
 def sauvegarder_etat_jardin(etat):
     """Sauvegarde l'état du déficit hydrique du jardin dans un fichier JSON."""
-    # Convertir la date en chaîne avant de sauvegarder
-    if etat["date_derniere_maj"]:
-        etat["date_derniere_maj"] = etat["date_derniere_maj"].strftime('%Y-%m-%d')
+    # Create a copy to avoid modifying the cached object directly
+    etat_to_save = etat.copy() 
+    if etat_to_save["date_derniere_maj"]:
+        etat_to_save["date_derniere_maj"] = etat_to_save["date_derniere_maj"].strftime('%Y-%m-%d')
     with open(constants.ETAT_JARDIN_FILE, 'w', encoding='utf-8') as f:
-        json.dump(etat, f, indent=2)
-    # Invalider le cache pour que la prochaine lecture prenne la nouvelle valeur
-    charger_etat_jardin.clear()
+        json.dump(etat_to_save, f, indent=2)
+    charger_etat_jardin.clear() # Invalider le cache
 
 
 @st.cache_data(ttl=86400) # Cache for 24 hours, or until file changes
 def charger_familles():
     """Charge les données des familles de plantes depuis un fichier JSON (familles_plantes.json)."""
-    if not os.path.exists(constants.FAMILLES_PLANTES_FILE):
-        st.error(f"Fichier familles_plantes.json introuvable à {constants.FAMILLES_PLANTES_FILE}. Veuillez vous assurer qu'il existe.")
-        return {}
-    try:
-        with open(constants.FAMILLES_PLANTES_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        st.error(f"Erreur de lecture du fichier familles_plantes.json. Le fichier est peut-être corrompu ou mal formaté. Erreur: {e}")
-        return {}
-    except Exception as e:
-        st.error(f"Une erreur inattendue est survenue lors du chargement des familles de plantes : {e}")
-        return {}
+    return _load_json_file(constants.FAMILLES_PLANTES_FILE, {})
 
 # Construction d'un index plante → kc + famille
 def construire_index_plantes(familles):
@@ -179,17 +196,8 @@ def charger_recommandations_mensuelles(filepath="recommandations_jardin.json"):
     """
     Charge les recommandations mensuelles depuis un fichier JSON.
     """
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            # Convertir les clés de mois en int si elles sont des chaînes
-            return {int(k): v for k, v in data.items()}
-    except FileNotFoundError:
-        st.error(f"Fichier de recommandations '{filepath}' introuvable.")
-        return {}
-    except json.JSONDecodeError:
-        st.error(f"Erreur de lecture du fichier JSON '{filepath}'. Vérifiez le format.")
-        return {}
+    data = _load_json_file(filepath, {})
+    return {int(k): v for k, v in data.items()} if data else {}
 
 
 def get_hauteur_tonte_default(journal_tontes):

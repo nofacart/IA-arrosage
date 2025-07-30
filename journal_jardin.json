@@ -1,8 +1,17 @@
 {
   "arrosages": [
-    "2025-07-14T00:00:00",
-    "2025-07-18T00:00:00",
-    "2025-07-27T00:00:00"
+    {
+    "date": "2025-07-14T00:00:00",
+    "plants" : ["courgette", "melon", "fraise", "haricot vert", "thym", "tomate", "origan", "romarin"]
+    },
+    {
+    "date": "2025-07-18T00:00:00",
+    "plants" : ["courgette", "melon", "fraise", "haricot vert", "thym", "tomate", "origan", "romarin"]
+    },
+    {
+    "date": "2025-07-27T00:00:00",
+    "plants" : ["courgette", "melon", "fraise", "haricot vert", "thym", "tomate", "origan", "romarin"]
+    }
   ],
   "tontes": [
     {
