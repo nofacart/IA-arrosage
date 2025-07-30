@@ -47,7 +47,6 @@ def charger_journal():
     journal_data = _load_json_file(constants.JOURNAL_PATH, {"arrosages": [], "tontes": []})
 
     # Load user preferences to get current plants for old watering entries
-    # This is a critical step for backward compatibility if old string dates exist
     user_prefs = charger_preferences_utilisateur()
     current_cultivated_plants = user_prefs.get("plantes", [])
 
@@ -67,8 +66,17 @@ def charger_journal():
                 st.warning(f"Impossible de convertir l'ancienne date d'arrosage '{entry}' à l'index {i}. Ignorée. Erreur: {e}")
         elif isinstance(entry, dict) and "date" in entry: # Handle new dictionary format
             try:
-                # Ensure 'date' is a Timestamp
-                entry_date = pd.to_datetime(entry["date"])
+                date_value_from_json = entry["date"]
+                if isinstance(date_value_from_json, str):
+                    # If it's a string, convert it to Timestamp
+                    entry_date = pd.to_datetime(date_value_from_json)
+                elif isinstance(date_value_from_json, pd.Timestamp):
+                    # If it's already a Timestamp (e.g., from a previous load and save cycle)
+                    entry_date = date_value_from_json
+                else:
+                    # If the date value is neither a string nor a Timestamp, it's malformed
+                    raise ValueError(f"Valeur de date inattendue: {type(date_value_from_json)} - {date_value_from_json}")
+                
                 entry["date"] = entry_date
 
                 # Ensure 'plants' key exists and is a list
@@ -76,7 +84,6 @@ def charger_journal():
                     entry["plants"] = [] # Default to empty list if missing or wrong type
                 
                 # Add other optional fields with defaults if they might be missing from older entries
-                # These fields are not recorded by the app currently, but might exist in old data
                 entry["amount_liters"] = entry.get("amount_liters")
                 entry["duration_minutes"] = entry.get("duration_minutes")
                 entry["method"] = entry.get("method")
@@ -84,23 +91,29 @@ def charger_journal():
 
                 processed_arrosages.append(entry)
             except (ValueError, TypeError) as e:
-                # Safely get date for warning if entry is a dict but date conversion fails
-                date_for_warning = entry.get('date', 'N/A') if isinstance(entry, dict) else 'N/A'
-                st.warning(f"Impossible de convertir la date d'arrosage '{date_for_warning}' dans l'entrée {i}. Ignorée. Erreur: {e}")
+                # This warning will now show the actual problematic date value
+                st.warning(f"Impossible de convertir la date d'arrosage '{entry.get('date', 'N/A')}' dans l'entrée {i}. Erreur: {e}. Entrée complète: {entry}")
         else:
-            # This 'else' block catches any entry that is NEITHER a string NOR a dictionary, or a dict without 'date'
             st.warning(f"Entrée d'arrosage mal formée ou inattendue à l'index {i} : {entry}. Ignorée.")
     journal_data["arrosages"] = processed_arrosages
 
-    # --- Process 'tontes' list --- (no change needed here as it was already robust for dicts)
+    # --- Process 'tontes' list ---
     processed_tontes = []
     for tonte_entry in journal_data.get("tontes", []):
         if isinstance(tonte_entry, dict) and "date" in tonte_entry:
             try:
-                tonte_entry["date"] = pd.to_datetime(tonte_entry["date"])
+                # Similar robust check for mowing dates
+                date_value_from_json = tonte_entry["date"]
+                if isinstance(date_value_from_json, str):
+                    tonte_entry["date"] = pd.to_datetime(date_value_from_json)
+                elif isinstance(date_value_from_json, pd.Timestamp):
+                    tonte_entry["date"] = date_value_from_json
+                else:
+                    raise ValueError(f"Valeur de date inattendue pour la tonte: {type(date_value_from_json)} - {date_value_from_json}")
+                
                 processed_tontes.append(tonte_entry)
             except (ValueError, TypeError) as e:
-                st.warning(f"Impossible de convertir la date de tonte '{tonte_entry.get('date', 'N/A')}'. Entrée ignorée. Erreur: {e}")
+                st.warning(f"Impossible de convertir la date de tonte '{tonte_entry.get('date', 'N/A')}'. Entrée ignorée. Erreur: {e}. Entrée complète: {tonte_entry}")
         else:
             st.warning(f"Entrée de tonte mal formée : {tonte_entry}. Ignorée.")
     journal_data["tontes"] = processed_tontes
@@ -109,7 +122,6 @@ def charger_journal():
 
 def sauvegarder_journal(journal_data):
     # Create a deep copy to avoid modifying the original dict during serialization
-    # This copy logic is important to prevent issues with cached objects
     data_to_save = {
         "arrosages": [],
         "tontes": []
@@ -119,17 +131,14 @@ def sauvegarder_journal(journal_data):
         serialized_arrosages = []
         for entry in journal_data["arrosages"]:
             if isinstance(entry, dict) and "date" in entry:
-                # Create a new dictionary for each entry to avoid modifying the original
                 serialized_entry = {
-                    "date": entry["date"].isoformat(),
+                    "date": entry["date"].isoformat(), # Convert Timestamp to ISO string for saving
                     "plants": entry.get("plants", []),
-                    # Only include these if they are not None, as per user request to not record them
                     "amount_liters": entry.get("amount_liters"), 
                     "duration_minutes": entry.get("duration_minutes"),
                     "method": entry.get("method"),
                     "notes": entry.get("notes")
                 }
-                # Remove None values from the dictionary before saving to keep JSON clean
                 serialized_entry = {k: v for k, v in serialized_entry.items() if v is not None}
                 serialized_arrosages.append(serialized_entry)
             else:
@@ -139,7 +148,7 @@ def sauvegarder_journal(journal_data):
     if "tontes" in journal_data and journal_data["tontes"]:
         for tonte in journal_data["tontes"]:
             if isinstance(tonte, dict) and isinstance(tonte.get("date"), pd.Timestamp):
-                serialized_tonte = tonte.copy() # Copy the dict
+                serialized_tonte = tonte.copy()
                 serialized_tonte["date"] = serialized_tonte["date"].isoformat()
                 data_to_save["tontes"].append(serialized_tonte)
             else:
