@@ -1,16 +1,53 @@
 {
   "arrosages": [
     {
-    "date": "2025-07-14T00:00:00",
-    "plants" : ["courgette", "melon", "fraise", "haricot vert", "thym", "tomate", "origan", "romarin"]
+      "date": "2025-07-14T00:00:00",
+      "plants": [
+        "courgette",
+        "melon",
+        "fraise",
+        "haricot vert",
+        "thym",
+        "tomate",
+        "origan",
+        "romarin"
+      ]
     },
     {
-    "date": "2025-07-18T00:00:00",
-    "plants" : ["courgette", "melon", "fraise", "haricot vert", "thym", "tomate", "origan", "romarin"]
+      "date": "2025-07-18T00:00:00",
+      "plants": [
+        "courgette",
+        "melon",
+        "fraise",
+        "haricot vert",
+        "thym",
+        "tomate",
+        "origan",
+        "romarin"
+      ]
     },
     {
-    "date": "2025-07-27T00:00:00",
-    "plants" : ["courgette", "melon", "fraise", "haricot vert", "thym", "tomate", "origan", "romarin"]
+      "date": "2025-07-27T00:00:00",
+      "plants": [
+        "courgette",
+        "melon",
+        "fraise",
+        "haricot vert",
+        "thym",
+        "tomate",
+        "origan",
+        "romarin"
+      ]
+    },
+    {
+      "date": "2025-08-17T00:00:00",
+      "plants": [
+        "tomate",
+        "courgette",
+        "haricot vert",
+        "melon",
+        "fraise"
+      ]
     }
   ],
   "tontes": [

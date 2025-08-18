@@ -23,6 +23,67 @@ from weather_utils import get_coords_from_city, recuperer_meteo
 st.set_page_config(page_title="🌿 Arrosage potager", layout="centered")
 st.title("🌿 Aide au jardinage")
 
+# --- Fonctions utilitaires pour l'affichage des fiches plantes ---
+def generate_planting_frieze(periode_semis_str):
+    """
+    Génère une frise visuelle des mois de plantation.
+    🟩 = mois de plantation, ⬜ = mois sans plantation.
+    """
+    all_months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
+    frieze_emojis = []
+    
+    # Mappe les noms de mois courants/abréviations à leur index (0-11)
+    month_map = {
+        "jan": 0, "fév": 1, "mar": 2, "avr": 3, "mai": 4, "juin": 5,
+        "juil": 6, "août": 7, "sep": 8, "oct": 9, "nov": 10, "déc": 11,
+        "janvier": 0, "février": 1, "mars": 2, "avril": 3, "juillet": 6,
+        "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11
+    }
+    
+    # Identifie les mois actifs
+    active_months_indices = set()
+    # Nettoie la chaîne pour faciliter la correspondance
+    parts = periode_semis_str.lower().replace(",", " ").replace("(", " ").replace(")", " ").split()
+
+    for part in parts:
+        # Gère les noms de mois directs
+        if part in month_map:
+            active_months_indices.add(month_map[part])
+        # Gère les plages comme "mars-avril"
+        elif '-' in part:
+            start_month_str, end_month_str = part.split('-')
+            if start_month_str in month_map and end_month_str in month_map:
+                start_idx = month_map[start_month_str]
+                end_idx = month_map[end_month_str]
+                # Gère les boucles autour de la fin de l'année (ex: Nov-Fév)
+                if start_idx <= end_idx:
+                    for i in range(start_idx, end_idx + 1):
+                        active_months_indices.add(i)
+                else: # Boucle autour de l'année
+                    for i in range(start_idx, 12):
+                        active_months_indices.add(i)
+                    for i in range(0, end_idx + 1):
+                        active_months_indices.add(i)
+
+    for i in range(12):
+        if i in active_months_indices:
+            frieze_emojis.append("🟩") # Carré vert pour le mois de plantation
+        else:
+            frieze_emojis.append("⬜") # Carré blanc pour les mois sans plantation
+            
+    return " ".join(frieze_emojis) + "<br>" + " ".join([m[0] for m in all_months]) # Affiche la première lettre du mois
+
+def get_sunlight_icon(besoins_lumiere_str):
+    """Retourne une icône et le texte pour les besoins en lumière."""
+    if "plein soleil" in besoins_lumiere_str.lower():
+        return "☀️ Plein soleil"
+    elif "mi-ombre" in besoins_lumiere_str.lower():
+        return "🌤️ Mi-ombre"
+    elif "ombre" in besoins_lumiere_str.lower():
+        return "☁️ Ombre"
+    else:
+        return besoins_lumiere_str # Retourne le texte original si pas de correspondance
+
 try:
     today = pd.to_datetime(datetime.now().date())
     current_month = str(today.month) # Convertir le mois en chaîne pour correspondre aux clés JSON
@@ -79,7 +140,7 @@ try:
         "📈 Suivi Météo",
         "📊 Mon Jardin en chiffre",
         "🌱 Mon Potager & Paramètres",
-        "📚 Fiches Plantes"
+        "📚 Fiches Plantes" # Nouveau tab
     ])
 
     with tab1:
@@ -121,14 +182,6 @@ try:
                         
                         journal["arrosages"].append(new_watering_event)
                         data_manager.sauvegarder_journal(journal)
-                        
-                        # Après l'arrosage, réinitialiser les déficits pour les familles des plantes choisies
-                        for plant_name in selected_plants_for_watering: # Itérer sur les noms des plantes sélectionnées
-                            if plant_name in plantes_index: # Vérifier que le nom de la plante est dans l'index principal des plantes
-                                family_code = plantes_index[plant_name].get("famille") # Obtenir le code de la famille
-                                if family_code and family_code in etat_jardin["deficits_accumules"]:
-                                    etat_jardin["deficits_accumules"][family_code] = 0.0
-                        data_manager.sauvegarder_etat_jardin(etat_jardin)
                         
                         st.success(f"💧 Arrosage enregistré pour {', '.join(selected_plants_for_watering)} !")
                         st.rerun() # Re-exécuter pour mettre à jour les données affichées
@@ -309,10 +362,10 @@ try:
             else:
                 jours_depuis_tonte_tab5 = st.slider("Jours depuis la dernière tonte (pour simulation si aucune enregistrée) :", 1, 21, constants.DEFAULT_JOURS_TONTE_SIMULATION, key="jours_tonte_slider_tab5_empty")
                 date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tonte_tab5)
-                st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}**.")
+                st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}.")
         else:
             jours_depuis_tonte_tab5 = st.slider("Jours depuis la dernière tonte (pour simulation si aucune enregistrée) :", 1, 21, constants.DEFAULT_JOURS_TONTE_SIMULATION, key="jours_tonte_slider_tab5")
-            date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tab5)
+            date_dernier_tonte_tab5 = today - pd.Timedelta(days=jours_depuis_tonte_tab5)
             st.info(f"Simule la dernière tonte au **{format_date(date_dernier_tonte_tab5.date(), format='full', locale='fr')}**.")
 
         # Slider pour la hauteur cible de la pelouse
@@ -331,7 +384,7 @@ try:
     hauteur_initiale_apres_tonte = hauteur_tonte_input_default # Utiliser la hauteur par défaut ou la dernière enregistrée
     hauteur_estimee_cm = hauteur_initiale_apres_tonte + (croissance_totale_mm / 10)
 
-    # Recalculer les déficits pour le jour actuel en fonction des dernières informations et de la dernière mise à jour
+    # Recalculer les déficits pour le jour actuel en fonction des dernières informations
     nouveaux_deficits = garden_logic.calculer_deficits_accumules(
         journal["arrosages"], # Passer le journal avec la nouvelle structure
         familles,
@@ -339,9 +392,7 @@ try:
         df_meteo_global,
         today,
         type_sol,
-        paillage,
-        etat_jardin["deficits_accumules"], # <-- NOUVEL ARGUMENT : Déficits précédents
-        etat_jardin["date_derniere_maj"] # <-- NOUVEL ARGUMENT : Date de dernière mise à jour précédente
+        paillage
     )
     
     # Mettre à jour l'état du jardin avec les déficits calculés aujourd'hui
@@ -521,7 +572,7 @@ try:
                     </div>
                     <div style="text-align: right;">
                         {icone_meteo} 🌡️ {row['temp_max']}°C<br>
-                        � {row['pluie']:.1f} mm &nbsp; 🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h
+                        💧 {row['pluie']:.1f} mm &nbsp; 🌬️ {int(row['vent']) if pd.notna(row['vent']) else '-'} km/h
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -609,6 +660,7 @@ try:
             st.dataframe(df_tontes.sort_values(by="Date", ascending=False).set_index("Date"), use_container_width=True)
         else:
             st.info("Aucune tonte enregistrée.")
+
     with tab6: # Nouveau tab pour les fiches plantes
         st.header("📚 Fiches Détaillées de Mes Plantes")
 
@@ -632,57 +684,18 @@ try:
                     st.markdown(f"**Famille :** {infos_plante_detaillees.get('famille', 'N/A').capitalize()}")
                     st.markdown(f"**Coefficient cultural (Kc) :** {infos_plante_detaillees.get('kc', 'N/A')}")
                     
-                    # --- Période de semis/plantation avec frise colorée ---
+                    # Affichage de la période de semis/plantation avec la frise
                     periode_semis_str = infos_plante_detaillees.get('periode_semis', 'N/A')
-                    st.markdown(f"**Période de semis/plantation :** {periode_semis_str}")
                     if periode_semis_str != 'N/A':
-                        months_to_highlight = ui_components.get_months_from_period_string(periode_semis_str)
-                        month_names_short = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
-                        
-                        cols = st.columns(12) # 12 colonnes pour les 12 mois
-                        for i, col in enumerate(cols):
-                            month_num = i + 1
-                            is_planting_month = month_num in months_to_highlight
-                            
-                            color = "#D4EDDA" if is_planting_month else "#F0F0F0" # Vert clair pour plantation, gris pour non
-                            text_color = "#28a745" if is_planting_month else "#6c757d" # Vert foncé ou gris foncé
-                            
-                            with col:
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: {color}; 
-                                                border-radius: 5px; 
-                                                padding: 5px 0; 
-                                                text-align: center; 
-                                                font-size: 0.7em; 
-                                                color: {text_color}; 
-                                                margin: 2px;">
-                                        {month_names_short[i]}
-                                    </div>
-                                    """, 
-                                    unsafe_allow_html=True
-                                )
-                    st.markdown("---") # Séparateur visuel après la frise
+                        st.markdown(f"**Période de semis/plantation :** {periode_semis_str}<br>"
+                                    f"{generate_planting_frieze(periode_semis_str)}", unsafe_allow_html=True)
+                    else:
+                        st.markdown("**Période de semis/plantation :** N/A")
 
-                    # --- Besoins en lumière avec icônes ---
-                    besoins_lumiere_text = infos_plante_detaillees.get('besoins_lumiere', 'N/A')
+                    # Affichage des besoins en lumière avec icône
+                    besoins_lumiere_str = infos_plante_detaillees.get('besoins_lumiere', 'N/A')
+                    st.markdown(f"**Besoins en lumière :** {get_sunlight_icon(besoins_lumiere_str)}")
                     
-                    sunlight_icons_map = {
-                        "plein soleil": "☀️ Plein soleil",
-                        "mi-ombre": "⛅ Mi-ombre",
-                        "ombre": "☁️ Ombre",
-                        "soleil": "☀️ Plein soleil", # Catch variations
-                        "mi-soleil": "⛅ Mi-ombre", # Catch variations
-                    }
-                    
-                    display_lumiere = besoins_lumiere_text # Default to original text
-                    for keyword, icon_text in sunlight_icons_map.items():
-                        if keyword in besoins_lumiere_text.lower():
-                            display_lumiere = icon_text
-                            break
-                    st.markdown(f"**Besoins en lumière :** {display_lumiere}")
-
-
                     st.markdown(f"**Sensibilité aux maladies :** {infos_plante_detaillees.get('sensibilite_maladies', 'N/A')}")
                     
                     fav_assoc = infos_plante_detaillees.get('associations_favorables')
@@ -697,7 +710,7 @@ try:
                     else:
                         st.markdown("**Associations défavorables :** Aucune information.")
                     
-                    st.markdown("---") # Séparateur entre les fiches
+                    st.markdown("---") # Séparateur
                 else:
                     st.info(f"Détails non trouvés pour la plante : {selected_plant_name.capitalize()}.")
             else:

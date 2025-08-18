@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import locale
 from babel.dates import format_date
-import matplotlib.pyplot as plt # Pour afficher_evolution_pelouse
-import matplotlib.dates as mdates # Pour formater les dates sur les graphiques
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import re
 
-import constants # Pour les constantes par défaut si besoin
+import constants
 
 # Tente de définir la locale pour le formatage des dates
 try:
@@ -19,18 +19,22 @@ except locale.Error:
         pass # Si aucune locale française n'est trouvée, utilise le comportement par défaut
 
 def afficher_calendrier_frise(journal, today):
-    """Affiche une frise de 14 jours avec les actions de jardin (arrosage, tonte)."""
+    """
+    Affiche une frise de 14 jours avec les actions de jardin (arrosage, tonte).
+    Args:
+        journal (dict): Dictionnaire contenant le journal des actions.
+        today (pd.Timestamp): Date d'aujourd'hui.
+    """
     jours = [today - pd.Timedelta(days=i) for i in range(13, -1, -1)]
     
-    # Extraire les dates des événements d'arrosage (qui sont maintenant des dictionnaires)
-    # Filtrer pour s'assurer que l'entrée est un dictionnaire et contient une clé 'date' qui est un Timestamp
+    # Extraire les dates des événements d'arrosage
     dates_arrosage = set(
         entry["date"].date() 
         for entry in journal.get("arrosages", []) 
         if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], (pd.Timestamp, datetime))
     )
     
-    # Extraire les dates des événements de tonte (déjà des dictionnaires)
+    # Extraire les dates des événements de tonte
     dates_tonte = set(
         t["date"].date() 
         for t in journal.get("tontes", []) 
@@ -43,7 +47,7 @@ def afficher_calendrier_frise(journal, today):
         jour_date = jour.date()
 
         if jour_date in dates_arrosage:
-            emoji = "✅"
+            emoji = "💧"
             action = "Arrosé"
             couleur = "#D4EDDA"
         elif jour_date in dates_tonte:
@@ -72,6 +76,7 @@ def afficher_calendrier_frise(journal, today):
         """)
     st.markdown("### 📅 Mon Jardin (14 jours en frise)")
     st.markdown("".join(lignes), unsafe_allow_html=True)
+
 
 @st.cache_data
 def calculer_stats_arrosage(journal):
@@ -185,7 +190,6 @@ def get_months_from_period_string(period_str):
     for m1_name, m1_num in months_map.items():
         for m2_name, m2_num in months_map.items():
             if f"{m1_name}-{m2_name}" in period_str_lower:
-                # Handle wrap-around for year end (e.g., Nov-Jan)
                 if m1_num <= m2_num:
                     for m in range(m1_num, m2_num + 1):
                         found_months.add(m)
