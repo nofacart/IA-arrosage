@@ -15,6 +15,7 @@ METEO_HISTORIQUE_DISPONIBLE = 7
 DEFAULT_JOURS_ARROSAGE_SIMULATION = 7 # For initial simulation if no watering recorded
 DEFAULT_JOURS_TONTE_SIMULATION = 14 # For initial simulation if no mowing recorded
 DEFAULT_HAUTEUR_CIBLE_CM = 5 # Default target height for lawn mowing in cm
+FACTEUR_BAC = 2.5 # Multiplicateur pour les plantes en bac (se dessèchent plus vite)
 # Added the missing constant:
 DEFAULT_HAUTEUR_TONTE_INPUT = DEFAULT_HAUTEUR_CIBLE_CM # Default height for the mowing input slider
 DEFAULT_ARROSAGE_VOLUME_MM = 10 # Default watering amount in mm when recording

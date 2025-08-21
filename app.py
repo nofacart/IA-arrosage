@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 from babel.dates import format_date
+import locale
 
 # Import constants
 import constants
@@ -23,67 +24,6 @@ from weather_utils import get_coords_from_city, recuperer_meteo
 st.set_page_config(page_title="🌿 Arrosage potager", layout="centered")
 st.title("🌿 Aide au jardinage")
 
-# --- Fonctions utilitaires pour l'affichage des fiches plantes ---
-def generate_planting_frieze(periode_semis_str):
-    """
-    Génère une frise visuelle des mois de plantation.
-    🟩 = mois de plantation, ⬜ = mois sans plantation.
-    """
-    all_months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
-    frieze_emojis = []
-    
-    # Mappe les noms de mois courants/abréviations à leur index (0-11)
-    month_map = {
-        "jan": 0, "fév": 1, "mar": 2, "avr": 3, "mai": 4, "juin": 5,
-        "juil": 6, "août": 7, "sep": 8, "oct": 9, "nov": 10, "déc": 11,
-        "janvier": 0, "février": 1, "mars": 2, "avril": 3, "juillet": 6,
-        "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11
-    }
-    
-    # Identifie les mois actifs
-    active_months_indices = set()
-    # Nettoie la chaîne pour faciliter la correspondance
-    parts = periode_semis_str.lower().replace(",", " ").replace("(", " ").replace(")", " ").split()
-
-    for part in parts:
-        # Gère les noms de mois directs
-        if part in month_map:
-            active_months_indices.add(month_map[part])
-        # Gère les plages comme "mars-avril"
-        elif '-' in part:
-            start_month_str, end_month_str = part.split('-')
-            if start_month_str in month_map and end_month_str in month_map:
-                start_idx = month_map[start_month_str]
-                end_idx = month_map[end_month_str]
-                # Gère les boucles autour de la fin de l'année (ex: Nov-Fév)
-                if start_idx <= end_idx:
-                    for i in range(start_idx, end_idx + 1):
-                        active_months_indices.add(i)
-                else: # Boucle autour de l'année
-                    for i in range(start_idx, 12):
-                        active_months_indices.add(i)
-                    for i in range(0, end_idx + 1):
-                        active_months_indices.add(i)
-
-    for i in range(12):
-        if i in active_months_indices:
-            frieze_emojis.append("🟩") # Carré vert pour le mois de plantation
-        else:
-            frieze_emojis.append("⬜") # Carré blanc pour les mois sans plantation
-            
-    return " ".join(frieze_emojis) + "<br>" + " ".join([m[0] for m in all_months]) # Affiche la première lettre du mois
-
-def get_sunlight_icon(besoins_lumiere_str):
-    """Retourne une icône et le texte pour les besoins en lumière."""
-    if "plein soleil" in besoins_lumiere_str.lower():
-        return "☀️ Plein soleil"
-    elif "mi-ombre" in besoins_lumiere_str.lower():
-        return "🌤️ Mi-ombre"
-    elif "ombre" in besoins_lumiere_str.lower():
-        return "☁️ Ombre"
-    else:
-        return besoins_lumiere_str # Retourne le texte original si pas de correspondance
-
 try:
     today = pd.to_datetime(datetime.now().date())
     current_month = str(today.month) # Convertir le mois en chaîne pour correspondre aux clés JSON
@@ -92,7 +32,12 @@ try:
 
     # 🔧 Chargement des préférences utilisateur (plantes, paillage, sol)
     prefs = data_manager.charger_preferences_utilisateur()
-    plantes_par_defaut = prefs.get("plantes", [])
+    plantes_par_defaut_dict = prefs.get("plantes_config", {})
+    # On récupère les noms des plantes dont "cultivated" est true
+    plantes_par_defaut = [
+        plante for plante, config in plantes_par_defaut_dict.items() 
+        if config.get("cultivated", False)
+    ]
     paillage_defaut = prefs.get("paillage", False)
     type_sol_defaut = prefs.get("type_sol", "Limoneux")
 
@@ -103,19 +48,14 @@ try:
     # 📖 Chargement du journal des actions (arrosage et tonte)
     journal = data_manager.charger_journal()
 
-
     # 💧 Chargement de l'état du jardin (déficits hydriques)
     etat_jardin = data_manager.charger_etat_jardin()
 
-
     # Définir la date de départ pour le calcul du delta météo
-    # La logique doit maintenant gérer le nouveau format de journal["arrosages"] (liste de dictionnaires)
-    # Filtrer les entrées d'arrosage valides pour s'assurer que 'max' ne s'applique qu'aux dictionnaires
     valid_arrosages_for_delta = [
         entry for entry in journal["arrosages"]
         if isinstance(entry, dict) and "date" in entry and isinstance(entry["date"], pd.Timestamp)
     ]
-
 
     if valid_arrosages_for_delta:
         # Trouver la date du dernier arrosage à partir du nouveau format de dictionnaire
@@ -143,9 +83,16 @@ try:
         "📚 Fiches Plantes" # Nouveau tab
     ])
 
+    if "plantes_choisies" not in st.session_state:
+        plantes_config_from_prefs = prefs.get("plantes_config", {})
+        st.session_state.plantes_choisies = {
+            plante: config.get("mode", [])
+            for plante, config in plantes_config_from_prefs.items()
+            if isinstance(config, dict)
+        }
+        
     with tab1:
         st.header("📆 Suivi du Jour")
-
         st.markdown("### Actions Rapides")
 
         col_arrosage, col_tonte = st.columns(2)
@@ -156,7 +103,7 @@ try:
                 st.subheader("💧 Enregistrer un Arrosage")
                 
                 # 'plantes_par_defaut' est déjà chargé depuis 'parametres_utilisateur.json'
-                available_plants_for_selection = plantes_par_defaut
+                available_plants_for_selection = list(st.session_state.plantes_choisies.keys())
 
                 # Permettre à l'utilisateur de sélectionner plusieurs plantes, par défaut toutes les plantes cultivées
                 selected_plants_for_watering = st.multiselect(
@@ -224,36 +171,144 @@ try:
     with tab5:
         st.header("🌱 Mon Potager & Paramètres")
 
-        # Sélection des plantes cultivées
-        toutes_les_plantes = sorted(plantes_index.keys())
-        
-        # Filter plantes_par_defaut to ensure all default values exist in options
-        # This prevents the "default value not in options" error
-        filtered_plantes_par_defaut = [
-            p for p in plantes_par_defaut if p in toutes_les_plantes
-        ]
+        # Initialisation de la session state pour les plantes cultivées
+        # La structure est un dictionnaire qui stocke les modes de culture sous forme de liste
+        if "plantes_choisies" not in st.session_state:
+            # On s'assure que prefs est un dictionnaire, sinon on utilise un dictionnaire vide
+            if not isinstance(prefs, dict):
+                st.error("Erreur de chargement des préférences : l'objet 'prefs' n'est pas un dictionnaire.")
+                st.stop()
+            
+            plantes_config_from_prefs = prefs.get("plantes_config", {})
 
-        plantes_choisies = st.multiselect(
-            "Sélectionnez les **plantes cultivées** :",
-            toutes_les_plantes,
-            default=filtered_plantes_par_defaut, # Use the filtered list as default
-            key="plantes_selection_tab5"
-        )
-        # Mettre à jour plantes_par_defaut pour les calculs globaux si modifié dans l'UI
-        if plantes_choisies != plantes_par_defaut:
-            plantes_par_defaut = plantes_choisies
-            # Re-sauvegarder les préférences immédiatement si les plantes changent dans l'UI
-            prefs["plantes"] = plantes_choisies
+            # Ajout d'une vérification pour s'assurer que plantes_config est un dictionnaire
+            if not isinstance(plantes_config_from_prefs, dict):
+                st.error("Erreur de chargement des préférences : 'plantes_config' n'est pas un dictionnaire.")
+                st.stop()
+                
+            st.session_state.plantes_choisies = {}
+
+            for plante, config in plantes_config_from_prefs.items():
+                # VÉRIFICATION AJOUTÉE : S'assurer que 'config' est bien un dictionnaire
+                if isinstance(config, dict):
+                    modes = config.get("mode", [])
+                    # S'assure que 'modes' est une liste, même si le fichier de préférences contient une chaîne
+                    if isinstance(modes, str):
+                        st.session_state.plantes_choisies[plante] = [modes]
+                    elif isinstance(modes, list):
+                        st.session_state.plantes_choisies[plante] = modes
+                    else:
+                        st.session_state.plantes_choisies[plante] = []
+                else:
+                    # Si la configuration de la plante n'est pas un dictionnaire, on l'ignore
+                    st.warning(f"La configuration pour la plante '{plante}' a un format inattendu et sera ignorée.")
+                    
+        # Sélection des plantes cultivées
+        toutes_les_plantes = sorted(plantes_index.keys(), key=locale.strxfrm)
+        
+        # Utilisation de st.expander pour ne pas surcharger la page
+        with st.expander("Sélectionnez vos plantes et leur mode de culture"):
+            st.write("Cochez le ou les modes de culture pour chaque plante.")
+
+            # Créer des en-têtes de colonnes pour l'affichage
+            col_header_1, col_header_2, col_header_3, col_header_4 = st.columns([2, 1, 1, 1])
+            with col_header_1:
+                st.markdown("**Plante**")
+            with col_header_2:
+                st.markdown("**Pleine terre**")
+            with col_header_3:
+                st.markdown("**En bac**")
+            with col_header_4:
+                st.markdown("**En bac couvert**")
+
+            st.markdown("---")
+
+            # Afficher les cases à cocher pour chaque plante et chaque mode de culture
+            temp_plantes_choisies = st.session_state.plantes_choisies.copy()
+
+            for plante in toutes_les_plantes:
+                # Créer les colonnes pour la plante et les trois modes
+                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                
+                # Afficher le nom de la plante dans la première colonne
+                with col1:
+                    st.write(f"**{plante.capitalize()}**")
+                    
+                # Gérer la case à cocher pour la pleine terre
+                with col2:
+                    modes = temp_plantes_choisies.get(plante, [])
+                    is_pleine_terre = "pleine_terre" in modes
+                    if st.checkbox("", value=is_pleine_terre, key=f"checkbox_pleine_terre_{plante}"):
+                        if "pleine_terre" not in modes:
+                            modes.append("pleine_terre")
+                            temp_plantes_choisies[plante] = modes
+                    else:
+                        if "pleine_terre" in modes:
+                            modes.remove("pleine_terre")
+                            if not modes:
+                                del temp_plantes_choisies[plante]
+                            else:
+                                temp_plantes_choisies[plante] = modes
+                    
+                # Gérer la case à cocher pour la culture en bac
+                with col3:
+                    modes = temp_plantes_choisies.get(plante, [])
+                    is_en_bac = "bac" in modes
+                    if st.checkbox("", value=is_en_bac, key=f"checkbox_en_bac_{plante}"):
+                        if "bac" not in modes:
+                            modes.append("bac")
+                            temp_plantes_choisies[plante] = modes
+                    else:
+                        if "bac" in modes:
+                            modes.remove("bac")
+                            if not modes:
+                                del temp_plantes_choisies[plante]
+                            else:
+                                temp_plantes_choisies[plante] = modes
+                    
+                # Gérer la case à cocher pour la culture en bac couvert
+                with col4:
+                    modes = temp_plantes_choisies.get(plante, [])
+                    is_bac_couvert = "bac_couvert" in modes
+                    if st.checkbox("", value=is_bac_couvert, key=f"checkbox_bac_couvert_{plante}"):
+                        if "bac_couvert" not in modes:
+                            modes.append("bac_couvert")
+                            temp_plantes_choisies[plante] = modes
+                    else:
+                        if "bac_couvert" in modes:
+                            modes.remove("bac_couvert")
+                            if not modes:
+                                del temp_plantes_choisies[plante]
+                            else:
+                                temp_plantes_choisies[plante] = modes
+        
+        # Mettre à jour la session state avec la sélection temporaire
+        st.session_state.plantes_choisies = temp_plantes_choisies
+            
+        # Bouton de validation pour enregistrer la sélection finale
+        if st.button("✅ Valider ma sélection", key="validation_button"):
+            # Enregistrer la sélection depuis la session state
+            prefs["plantes_config"] = {
+                plante: {"mode": modes}
+                for plante, modes in st.session_state.plantes_choisies.items()
+            }
             data_manager.enregistrer_preferences_utilisateur(prefs)
+            st.success("Votre sélection a été enregistrée avec succès !")
+            st.rerun()
 
 
         # Bouton de réinitialisation des paramètres
         if st.button("🔁 Réinitialiser les paramètres", key="reset_prefs_tab5"):
+            # Réinitialiser les préférences dans le fichier et la session state
             data_manager.enregistrer_preferences_utilisateur({})
+            if "plantes_choisies" in st.session_state:
+                del st.session_state.plantes_choisies
+            
+            # Vider les caches
             data_manager.charger_preferences_utilisateur.clear()
             data_manager.charger_familles.clear()
             data_manager.charger_etat_jardin.clear()
-            data_manager.charger_journal.clear() # Vider le cache du journal aussi lors d'une réinitialisation complète
+            data_manager.charger_journal.clear() 
             st.success("Paramètres réinitialisés ! Actualisation de la page...")
             st.rerun()
 
@@ -262,14 +317,16 @@ try:
 
         # Entrée texte pour la ville
         ville = st.text_input("Ville ou commune (ex: Beauzelle) :", prefs.get("ville", "Beauzelle"), key="ville_input_tab5")
-        
-        # Mettre à jour les préférences avec la nouvelle ville si différente
-        if ville != prefs.get("ville", "Beauzelle"):
+
+        # Bouton pour valider et enregistrer les modifications
+        if st.button("✅ Enregistrer la ville"):
+            # Mettre à jour les préférences sans condition, car le bouton a été cliqué
             prefs["ville"] = ville
             data_manager.enregistrer_preferences_utilisateur(prefs)
             get_coords_from_city.clear() # Vider le cache pour les nouvelles coordonnées de la ville
             recuperer_meteo.clear() # Vider le cache météo pour la nouvelle ville
-            st.rerun() # Re-exécuter pour appliquer le changement de ville
+            st.success(f"La ville '{ville}' a été enregistrée avec succès.")
+            st.rerun() # Re-exécuter pour appliquer le changement
 
         infos_ville = get_coords_from_city(ville)
 
@@ -277,7 +334,7 @@ try:
             LAT = infos_ville["lat"]
             LON = infos_ville["lon"]
             st.info(f"📍 Ville sélectionnée : **{infos_ville['name']}**, {infos_ville['country']} \n"
-                                     f"🌐 Coordonnées : `{LAT:.2f}, {LON:.2f}`")
+                            f"🌐 Coordonnées : `{LAT:.2f}, {LON:.2f}`")
         else:
             st.error("❌ Ville non trouvée. Veuillez vérifier l'orthographie ou en choisir une autre.")
             st.stop() # Arrêter l'exécution pour éviter les erreurs si la ville n'est pas trouvée
@@ -310,7 +367,7 @@ try:
 
         # Sauvegarder les préférences (ville, plantes, sol, paillage)
         if (type_sol != type_sol_defaut) or (paillage != paillage_defaut):
-            prefs.update({"plantes": plantes_choisies, "paillage": paillage, "type_sol": type_sol})
+            prefs.update({"plantes": temp_plantes_choisies, "paillage": paillage, "type_sol": type_sol})
             data_manager.enregistrer_preferences_utilisateur(prefs)
             st.success("Vos préférences ont été enregistrées.")
             st.rerun() # Re-exécuter pour appliquer les nouveaux facteurs sol/paillage
@@ -383,12 +440,12 @@ try:
 
     hauteur_initiale_apres_tonte = hauteur_tonte_input_default # Utiliser la hauteur par défaut ou la dernière enregistrée
     hauteur_estimee_cm = hauteur_initiale_apres_tonte + (croissance_totale_mm / 10)
-
+    
     # Recalculer les déficits pour le jour actuel en fonction des dernières informations
-    nouveaux_deficits = garden_logic.calculer_deficits_accumules(
+    nouveaux_deficits = garden_logic.calculer_solde_hydrique_accumule(
         journal["arrosages"], # Passer le journal avec la nouvelle structure
         familles,
-        plantes_choisies, # Utiliser plantes_choisies du multiselect pour l'exécution actuelle
+        temp_plantes_choisies, # Utiliser plantes_choisies du multiselect pour l'exécution actuelle
         df_meteo_global,
         today,
         type_sol,
@@ -410,7 +467,7 @@ try:
     table_data = []
     pluie_prochaine_24h = df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=1))]["pluie"].sum()
 
-    for code_plante in plantes_choisies: # Utiliser plantes_choisies pour les recommandations
+    for code_plante in temp_plantes_choisies: # Utiliser plantes_choisies pour les recommandations
         if code_plante not in plantes_index:
             continue
 
@@ -494,11 +551,25 @@ try:
         # Recommandations détaillées par plante
         st.markdown("### 🌱 Recommandations par Plante")
         for ligne in table_data:
+            # Convertir le nom de la plante en minuscules pour une recherche plus robuste
+            nom_plante = ligne['Plante'].lower()
+            modes = st.session_state.plantes_choisies.get(nom_plante, [])
+            modes_str = ""
+            
+            if modes:
+                formatted_modes = []
+                if "pleine_terre" in modes:
+                    formatted_modes.append("Pleine terre")
+                if "bac" in modes:
+                    formatted_modes.append("En bac")
+                modes_str = f" ({', '.join(formatted_modes)})"
+
             color_code = "#F8D7DA" if ligne["Recommandation"] == "Arroser" else "#D4EDDA"
             emoji = "💧" if ligne["Recommandation"] == "Arroser" else "✅"
+            
             st.markdown(f"<div style='background-color: {color_code}; padding: 10px; border-radius: 5px; margin-bottom:5px;'>"
-                                     f"{emoji} <b>{ligne['Plante']}</b> : {ligne['Détail']}</div>",
-                                     unsafe_allow_html=True)
+                                f"{emoji} <b>{ligne['Plante']}{modes_str}</b> : {ligne['Détail']}</div>",
+                                unsafe_allow_html=True)
 
         st.markdown("---")
 
@@ -513,12 +584,12 @@ try:
             else:
                 # La fonction estimer_arrosage_le_plus_contraignant prend journal["arrosages"] et retourne une date
                 date_prochain_arrosage = garden_logic.estimer_arrosage_le_plus_contraignant(
-                    plantes_choisies, # Utiliser plantes_choisies du multiselect pour l'exécution actuelle
-                    plantes_index, # <-- Ajout de index_plantes
-                    df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=constants.DEFAULT_JOURS_ARROSAGE_SIMULATION))], # Limiter la prévision
-                    SEUIL_DEFICIT, # <-- Utilisation de la variable SEUIL_DEFICIT
-                    facteur_sol, # <-- Utilisation de la variable facteur_sol
-                    facteur_paillage # <-- Utilisation de la variable facteur_paillage
+                    st.session_state.plantes_choisies,
+                    plantes_index,
+                    df_meteo_global[(df_meteo_global["date"] > today) & (df_meteo_global["date"] <= today + pd.Timedelta(days=constants.DEFAULT_JOURS_ARROSAGE_SIMULATION))],
+                    SEUIL_DEFICIT,
+                    facteur_sol,
+                    facteur_paillage
                 )
                 if date_prochain_arrosage:
                     nb_jours = (date_prochain_arrosage - today).days
@@ -624,6 +695,30 @@ try:
 
         st.markdown("---")
 
+        # --- NOUVELLE SECTION: État Hydrique du Jardin ---
+        st.markdown("### 💧 État Hydrique des Plantes")
+        
+        # Vérifier si les données d'état du jardin sont disponibles
+        if "deficits_accumules" in etat_jardin and etat_jardin["deficits_accumules"]:
+            # Créer un DataFrame à partir du dictionnaire de déficits
+            df_deficits = pd.DataFrame(etat_jardin["deficits_accumules"].items(),
+                                    columns=["Plante", "Déficit Accumulé (mm)"])
+            
+            # Le déficit hydrique est un solde. Une valeur positive indique un déficit d'eau.
+            st.info("Un déficit positif signifie que la plante a besoin d'eau. Un déficit nul ou négatif signifie que le sol est saturé.")
+            
+            # Afficher un graphique à barres pour la visualisation
+            # Utiliser .set_index pour que les plantes soient l'axe des x
+            st.bar_chart(df_deficits.set_index("Plante"), use_container_width=True)
+            
+            # Afficher les données sous forme de tableau pour plus de détails
+            st.dataframe(df_deficits.sort_values(by="Déficit Accumulé (mm)", ascending=False), use_container_width=True)
+
+        else:
+            st.info("Aucun déficit hydrique calculé. Assurez-vous d'avoir sélectionné des plantes dans vos paramètres.")
+
+        st.markdown("---")
+
         st.markdown("### Visualisation du Journal") # Ajout d'un titre pour plus de clarté
 
         # Afficher les événements d'arrosage
@@ -654,7 +749,7 @@ try:
         # Afficher les événements de tonte (pas de changement nécessaire ici)
         st.markdown("#### Historique des Tontes")
         valid_tontes_for_df = [{"Date": t["date"].date(), "Hauteur (cm)": t["hauteur"]}
-                               for t in journal["tontes"] if isinstance(t, dict) and "date" in t and "hauteur" in t and isinstance(t["date"], pd.Timestamp)]
+                            for t in journal["tontes"] if isinstance(t, dict) and "date" in t and "hauteur" in t and isinstance(t["date"], pd.Timestamp)]
         df_tontes = pd.DataFrame(valid_tontes_for_df)
         if not df_tontes.empty:
             st.dataframe(df_tontes.sort_values(by="Date", ascending=False).set_index("Date"), use_container_width=True)
@@ -665,7 +760,7 @@ try:
         st.header("📚 Fiches Détaillées de Mes Plantes")
 
         # Obtenir la liste de toutes les plantes pour la sélection
-        all_plant_names = sorted(plantes_index.keys())
+        all_plant_names = sorted(plantes_index.keys(), key=locale.strxfrm)
 
         if all_plant_names:
             # Sélecteur pour choisir une plante
@@ -682,19 +777,34 @@ try:
                 if infos_plante_detaillees:
                     st.markdown(f"### {selected_plant_name.capitalize()}")
                     st.markdown(f"**Famille :** {infos_plante_detaillees.get('famille', 'N/A').capitalize()}")
-                    st.markdown(f"**Coefficient cultural (Kc) :** {infos_plante_detaillees.get('kc', 'N/A')}")
                     
-                    # Affichage de la période de semis/plantation avec la frise
+                    # --- DÉBUT DE LA SECTION MODIFIÉE POUR L'ALIGNEMENT ---
                     periode_semis_str = infos_plante_detaillees.get('periode_semis', 'N/A')
+                    st.markdown(f"**Période de semis/plantation :** {periode_semis_str}")
+
                     if periode_semis_str != 'N/A':
-                        st.markdown(f"**Période de semis/plantation :** {periode_semis_str}<br>"
-                                    f"{generate_planting_frieze(periode_semis_str)}", unsafe_allow_html=True)
+                        emojis, initials = ui_components.generate_planting_frieze(periode_semis_str)
+                        
+                        # Crée 12 colonnes pour les emojis
+                        cols_emojis = st.columns(12)
+                        for i, emoji in enumerate(emojis):
+                            with cols_emojis[i]:
+                                st.markdown(f"<div style='text-align: center;'>{emoji}</div>", unsafe_allow_html=True)
+                                
+                        # Crée 12 colonnes pour les initiales des mois
+                        cols_initials = st.columns(12)
+                        for i, initial in enumerate(initials):
+                            with cols_initials[i]:
+                                st.markdown(f"<div style='text-align: center; font-weight: bold;'>{initial}</div>", unsafe_allow_html=True)
                     else:
                         st.markdown("**Période de semis/plantation :** N/A")
+                    # --- FIN DE LA SECTION MODIFIÉE ---
 
-                    # Affichage des besoins en lumière avec icône
+                    st.markdown("---") # Séparateur
+
+                    # Le reste du code est inchangé
                     besoins_lumiere_str = infos_plante_detaillees.get('besoins_lumiere', 'N/A')
-                    st.markdown(f"**Besoins en lumière :** {get_sunlight_icon(besoins_lumiere_str)}")
+                    st.markdown(f"**Besoins en lumière :** {ui_components.get_sunlight_icon(besoins_lumiere_str)}")
                     
                     st.markdown(f"**Sensibilité aux maladies :** {infos_plante_detaillees.get('sensibilite_maladies', 'N/A')}")
                     
@@ -709,7 +819,7 @@ try:
                         st.markdown(f"**Associations défavorables :** {', '.join([a.capitalize() for a in def_assoc])}")
                     else:
                         st.markdown("**Associations défavorables :** Aucune information.")
-                    
+                        
                     st.markdown("---") # Séparateur
                 else:
                     st.info(f"Détails non trouvés pour la plante : {selected_plant_name.capitalize()}.")
@@ -717,7 +827,6 @@ try:
                 st.info("Veuillez sélectionner une plante pour voir ses détails.")
         else:
             st.warning("Aucune plante disponible dans votre fichier de configuration des familles de plantes. Veuillez ajouter des plantes pour voir leurs fiches.")
-
 
 except Exception as e:
     st.error(f"Une erreur générale est survenue : {e}")

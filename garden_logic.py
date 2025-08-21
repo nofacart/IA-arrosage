@@ -4,90 +4,101 @@ from dateutil.relativedelta import relativedelta
 from babel.dates import format_date
 import streamlit as st
 
-
 # Import constants
 import constants
 
 # Import data management functions
 import data_manager
 
-
-# --- Garden Logic Functions ---
-
-def calculer_deficits_accumules(journal_arrosages, familles, plantes_choisies, df_meteo, today, type_sol, paillage):
+def calculer_solde_hydrique_accumule(journal_arrosages, familles, plantes_choisies, df_meteo, today, type_sol, paillage):
     """
-    Calcule les déficits hydriques accumulés pour les familles de plantes, en tenant compte des arrosages passés.
-
+    Calcule les soldes hydriques accumulés pour chaque instance de plante et de mode de culture.
+    Une valeur positive indique un déficit, une valeur négative un surplus.
+    
     Args:
         journal_arrosages (list): Liste des événements d'arrosage.
         familles (dict): Dictionnaire des familles de plantes et leurs propriétés.
-        plantes_choisies (list): Liste des noms de plantes sélectionnées par l'utilisateur.
+        plantes_choisies (dict): Dictionnaire où les clés sont les noms de plantes
+                                 et les valeurs sont des listes de modes de culture.
+                                 Ex: {"tomate": ["bac"], "courgette": ["pleine_terre"]}
         df_meteo (pd.DataFrame): DataFrame des données météorologiques.
         today (pd.Timestamp): Date actuelle.
         type_sol (str): Type de sol sélectionné.
         paillage (bool): Indique si le paillage est présent.
 
     Returns:
-        dict: Nouveaux déficits accumulés pour chaque famille de plantes.
+        dict: Soldes hydriques accumulés pour chaque instance de plante.
+              Ex: {"tomate_bac": 45.3, "courgette_pleine_terre": -5.2}
     """
-    nouveaux_deficits_accumules = {}
+    soldes_par_plante_et_mode = {}
     facteur_sol_val = constants.FACTEUR_SOL.get(type_sol, 1.0)
     facteur_paillage_val = constants.FACTEUR_PAILLAGE_REDUCTION if paillage else 1.0
+    facteur_bac_val = constants.FACTEUR_BAC
 
     # Date de début du calcul pour l'historique météo
     start_date_meteo = today - pd.Timedelta(days=constants.METEO_HISTORIQUE_DISPONIBLE)
 
-    for code_famille, infos_famille in familles.items():
-        plantes_famille = [p.get("nom") for p in infos_famille.get("plantes", []) if isinstance(p, dict) and "nom" in p]
-        
-        # On ne calcule le déficit que pour les familles dont au moins une plante est sélectionnée
-        if not any(p_nom in plantes_choisies for p_nom in plantes_famille):
+    if not isinstance(df_meteo, pd.DataFrame) or df_meteo.empty:
+        print("Erreur: Les données météo ne sont pas au bon format ou sont vides.")
+        return {}
+
+    df_periode = df_meteo[(df_meteo["date"] >= start_date_meteo) & (df_meteo["date"] <= today)].copy()
+    
+    # Créer un mapping de plantes vers leur famille pour une recherche rapide
+    plante_to_famille = {p['nom'].lower(): code for code, data in familles.items() for p in data['plantes']}
+
+    # Parcourir chaque instance de plante et son ou ses modes de culture
+    for nom_plante, modes_culture in plantes_choisies.items():
+        # Déterminer le kc (coefficient cultural) de la plante
+        code_famille = plante_to_famille.get(nom_plante.lower(), None)
+        if not code_famille:
             continue
-
-        kc = infos_famille.get("kc", 1.0)
         
-        # Initialiser le déficit pour cette famille
-        d = 0.0
-
-        # Parcourir les données météo depuis l'historique disponible jusqu'à aujourd'hui
-        # Assurez-vous que df_meteo est bien un DataFrame de Pandas
-        if not isinstance(df_meteo, pd.DataFrame):
-            st.error("Erreur: Les données météo ne sont pas au bon format.")
-            return {}
-
-        df_periode = df_meteo[(df_meteo["date"] >= start_date_meteo) & (df_meteo["date"] <= today)].copy()
+        kc = familles[code_famille].get("kc", 1.0)
         
-        # Appliquer les facteurs et calculer le déficit jour après jour
-        for index, row in df_periode.iterrows():
-            date_jour = row["date"].date()
-            evapo_jour = row["evapo"]
-            pluie_jour = row["pluie"]
+        # Parcourir chaque mode de culture associé à cette plante
+        for mode_culture in modes_culture:
+            # Créer une clé unique pour cette instance
+            cle_unique = f"{nom_plante}_{mode_culture}"
+
+            # Définir le facteur d'évapotranspiration en fonction du mode de culture
+            facteur_total = 1.0
+            if mode_culture == "bac" or mode_culture == "bac_couvert":
+                facteur_total = facteur_bac_val
+            elif mode_culture == "pleine_terre":
+                facteur_total = facteur_sol_val * facteur_paillage_val
             
-            # 1. Ajouter le déficit naturel de la journée
-            besoin_jour = evapo_jour * kc * facteur_sol_val * facteur_paillage_val
-            d += besoin_jour
-            
-            # 2. Soustraire la pluie de la journée
-            d -= pluie_jour
-            
-            # 3. Réinitialiser le déficit si un arrosage a eu lieu ce jour-là pour une plante de cette famille
-            arrosage_ce_jour = False
+            s = 0.0 # Initialiser le solde hydrique pour cette instance de plante
+
+            # Préparer le journal des arrosages pour une recherche rapide
+            arrosages_par_jour = {}
             for entry in journal_arrosages:
-                if isinstance(entry, dict) and "date" in entry and entry["date"].date() == date_jour:
-                    # Vérifier si au moins une plante arrosée appartient à cette famille
-                    if any(p in entry.get("plants", []) and p in plantes_famille for p in entry.get("plants", [])):
-                        # NOTE: J'ai ajouté une quantité par défaut de 10mm pour un arrosage. Vous pouvez la rendre configurable.
-                        d = 0 # Soustraire la quantité d'eau de l'arrosage du déficit
-                        arrosage_ce_jour = True
-                        break # Un seul arrosage par jour est pris en compte pour une famille
+                if isinstance(entry, dict) and "date" in entry:
+                    date_str = entry["date"].strftime('%Y-%m-%d')
+                    if date_str not in arrosages_par_jour:
+                        arrosages_par_jour[date_str] = set()
+                    arrosages_par_jour[date_str].update([p.lower() for p in entry.get("plants", [])])
 
-            # 4. S'assurer que le déficit ne devient pas négatif (il ne peut pas y avoir un surplus d'eau dans notre modèle)
-            d = max(0.0, d)
-        
-        # Sauvegarder le déficit final calculé pour la famille
-        nouveaux_deficits_accumules[code_famille] = d
+            # Calculer le solde jour après jour
+            for _, row in df_periode.iterrows():
+                date_str = row["date"].strftime('%Y-%m-%d')
+                evapo_jour = row["evapo"]
+                pluie_jour = row["pluie"]
+                
+                besoin_jour = evapo_jour * kc * facteur_total
+                s += besoin_jour
+                
+                # Soustraire la pluie UNIQUEMENT si le mode de culture la reçoit
+                if mode_culture in ["pleine_terre", "bac"]:
+                    s -= pluie_jour
+                
+                # Si la plante a été arrosée ce jour-là, le solde est remis à zéro
+                if nom_plante.lower() in arrosages_par_jour.get(date_str, set()):
+                    s = 0.0
+            
+            soldes_par_plante_et_mode[cle_unique] = s
 
-    return nouveaux_deficits_accumules
+    return soldes_par_plante_et_mode
 
 def croissance_herbe(temp_max, pluie, evapo):
     """
@@ -144,7 +155,6 @@ def estimer_arrosage_le_plus_contraignant(plantes_choisies, index_plantes, df_fu
                 dates_arrosage_potentielles.append(row["date"])
                 break
     return min(dates_arrosage_potentielles) if dates_arrosage_potentielles else None
-
 
 def estimer_date_prochaine_tonte(df_futur_meteo, hauteur_actuelle_cm, hauteur_cible_cm):
     """

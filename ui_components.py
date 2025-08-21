@@ -77,7 +77,6 @@ def afficher_calendrier_frise(journal, today):
     st.markdown("### 📅 Mon Jardin (14 jours en frise)")
     st.markdown("".join(lignes), unsafe_allow_html=True)
 
-
 @st.cache_data
 def calculer_stats_arrosage(journal):
     """
@@ -200,3 +199,63 @@ def get_months_from_period_string(period_str):
                         found_months.add(m)
     
     return sorted(list(found_months))
+
+# --- Fonctions utilitaires pour l'affichage des fiches plantes ---
+def generate_planting_frieze(periode_semis_str):
+    """
+    Génère une frise visuelle des mois de plantation.
+    🟩 = mois de plantation, ⬜ = mois sans plantation.
+    """
+    all_months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
+    frieze_emojis = []
+    
+    # Mappe les noms de mois courants/abréviations à leur index (0-11)
+    month_map = {
+        "jan": 0, "fév": 1, "mar": 2, "avr": 3, "mai": 4, "juin": 5,
+        "juil": 6, "août": 7, "sep": 8, "oct": 9, "nov": 10, "déc": 11,
+        "janvier": 0, "février": 1, "mars": 2, "avril": 3, "juillet": 6,
+        "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11
+    }
+    
+    # Identifie les mois actifs
+    active_months_indices = set()
+    # Nettoie la chaîne pour faciliter la correspondance
+    parts = periode_semis_str.lower().replace(",", " ").replace("(", " ").replace(")", " ").split()
+
+    for part in parts:
+        # Gère les noms de mois directs
+        if part in month_map:
+            active_months_indices.add(month_map[part])
+        # Gère les plages comme "mars-avril"
+        elif '-' in part:
+            start_month_str, end_month_str = part.split('-')
+            if start_month_str in month_map and end_month_str in month_map:
+                start_idx = month_map[start_month_str]
+                end_idx = month_map[end_month_str]
+                # Gère les boucles autour de la fin de l'année (ex: Nov-Fév)
+                if start_idx <= end_idx:
+                    for i in range(start_idx, end_idx + 1):
+                        active_months_indices.add(i)
+                else: # Boucle autour de l'année
+                    for i in range(start_idx, 12):
+                        active_months_indices.add(i)
+                    for i in range(0, end_idx + 1):
+                        active_months_indices.add(i)
+
+    # La fonction retourne les emojis et les initiales séparément
+    return [
+        "🟩" if i in active_months_indices else "⬜" for i in range(12)
+    ], [
+        m[0] for m in all_months
+    ]
+
+def get_sunlight_icon(besoins_lumiere_str):
+    """Retourne une icône et le texte pour les besoins en lumière."""
+    if "plein soleil" in besoins_lumiere_str.lower():
+        return "☀️ Plein soleil"
+    elif "mi-ombre" in besoins_lumiere_str.lower():
+        return "🌤️ Mi-ombre"
+    elif "ombre" in besoins_lumiere_str.lower():
+        return "☁️ Ombre"
+    else:
+        return besoins_lumiere_str # Retourne le texte original si pas de correspondance

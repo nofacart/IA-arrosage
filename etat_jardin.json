@@ -1,9 +1,10 @@
 {
-  "date_derniere_maj": "2025-08-18",
+  "date_derniere_maj": "2025-08-21",
   "deficits_accumules": {
-    "Tomates et apparent\u00e9s": 3.5994999999999995,
-    "Cucurbitac\u00e9es moyennes": 3.2865,
-    "L\u00e9gumineuses feuillues": 3.13,
-    "Fraises": 3.2865
+    "courgette_pleine_terre": -20.887999999999998,
+    "fraise_pleine_terre": -20.887999999999998,
+    "haricot vert_pleine_terre": -21.46,
+    "tomate_pleine_terre": -19.744,
+    "thym_pleine_terre": -8.958
   }
 }

@@ -1,12 +1,33 @@
 {
-  "plantes": [
-    "tomate",
-    "courgette",
-    "haricot vert",
-    "melon",
-    "fraise"
-  ],
+  "plantes_config": {
+    "courgette": {
+      "mode": [
+        "pleine_terre"
+      ]
+    },
+    "fraise": {
+      "mode": [
+        "pleine_terre"
+      ]
+    },
+    "haricot vert": {
+      "mode": [
+        "pleine_terre"
+      ]
+    },
+    "tomate": {
+      "mode": [
+        "pleine_terre"
+      ]
+    },
+    "thym": {
+      "mode": [
+        "pleine_terre"
+      ]
+    }
+  },
   "sol": "Limoneux",
   "paillage": false,
-  "type_sol": "Limoneux"
+  "type_sol": "Limoneux",
+  "ville": "Beauzelle"
 }
